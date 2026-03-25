@@ -1,44 +1,50 @@
 # EASE Frontend
 
-Aplicacao web do EASE para autenticacao, onboarding e dashboard de apoio ao MEI.
+Aplicação web do EASE para autenticação, onboarding e dashboard de apoio ao MEI.
 
-## Visao Geral
+## Visão Geral
 
-Este projeto foi desenvolvido em React com Vite e possui:
+Este projeto foi desenvolvido com React e Vite e oferece:
 
-1. Pagina inicial institucional.
+1. Página inicial institucional.
 2. Fluxo de login e cadastro.
-3. Dashboard com visoes de lancamentos, planejamento, documentos e central MEI.
-4. Integracao com API backend para autenticacao e dados financeiros.
+3. Dashboard com visões de lançamentos, planejamento, documentos e central MEI.
+4. Integração com API backend para autenticação e dados financeiros.
+
+## Comece Por Aqui
+
+1. Instale as dependências:
+
+```bash
+npm install
+```
+
+2. Crie o arquivo `.env` na raiz do projeto:
+
+```env
+VITE_API_BASE=http://localhost:8080
+```
+
+3. Rode em desenvolvimento:
+
+```bash
+npm run dev
+```
+
+Observação: existe o arquivo `.env.example` como referência.
 
 ## Tecnologias Utilizadas
 
 1. React 19
 2. Vite 7
 3. JavaScript (JSX)
-4. ESLint para padrao de codigo
+4. ESLint para padrão de código
 
 ## Requisitos
 
 1. Node.js 18+
 2. npm 9+
-3. Backend da API rodando (padrao em http://localhost:8080)
-
-## Configuracao do Ambiente
-
-1. Instale as dependencias:
-
-```bash
-npm install
-```
-
-2. Crie um arquivo `.env` na raiz do projeto com:
-
-```env
-VITE_API_BASE=http://localhost:8080
-```
-
-Observacao: existe o arquivo `.env.example` como referencia.
+3. Backend da API rodando (padrão em http://localhost:8080)
 
 ## Como Executar
 
@@ -48,7 +54,7 @@ Observacao: existe o arquivo `.env.example` como referencia.
 npm run dev
 ```
 
-### Build de Producao
+### Build de Produção
 
 ```bash
 npm run build
@@ -66,21 +72,21 @@ npm run preview
 npm run lint
 ```
 
-## Scripts Disponiveis
+## Scripts Disponíveis
 
 1. `npm run dev`: inicia ambiente de desenvolvimento com HMR.
-2. `npm run build`: gera build de producao.
+2. `npm run build`: gera build de produção.
 3. `npm run preview`: sobe servidor local para validar build.
-4. `npm run lint`: valida padroes de codigo.
+4. `npm run lint`: valida padrões de código.
 
 ## Estrutura Principal
 
 ```text
 src/
-	main.jsx                 # ponto de entrada da aplicacao
-	ease-v3-frontend.jsx     # pagina principal e fluxo de navegacao
+	main.jsx                 # ponto de entrada da aplicação
+	ease-v3-frontend.jsx     # página principal e fluxo de navegação
 	dashboard-module.jsx     # dashboard modular com regras e estados
-	App.jsx                  # componente padrao do template (nao utilizado no fluxo principal)
+	App.jsx                  # componente padrão do template (não utilizado no fluxo principal)
 	App.css
 	index.css
 public/
@@ -89,16 +95,16 @@ vite.config.js
 eslint.config.js
 ```
 
-## Fluxo de Navegacao
+## Fluxo de Navegação
 
-1. Usuario entra na tela inicial.
+1. Usuário entra na tela inicial.
 2. Pode seguir para login ou cadastro.
-3. Ao autenticar/cadastrar com sucesso, o token e dados basicos do usuario sao armazenados no `localStorage`.
-4. Dashboard busca dados financeiros na API conforme a aba ativa.
+3. Ao autenticar/cadastrar com sucesso, o token e dados básicos do usuário são armazenados no `localStorage`.
+4. O dashboard busca dados financeiros na API conforme a aba ativa.
 
-## Integracao com API
+## Integração com API
 
-Base URL configuravel por `VITE_API_BASE`.
+Base URL configurável por `VITE_API_BASE`.
 
 Endpoints utilizados no frontend:
 
@@ -109,22 +115,22 @@ Endpoints utilizados no frontend:
 
 Importante:
 
-1. Rotas de login e cadastro sao chamadas sem token de autorizacao.
+1. Rotas de login e cadastro são chamadas sem token de autorização.
 2. Demais rotas usam `Authorization: Bearer <token>` quando houver token salvo.
 
-## Solucao de Problemas
+## Solução de Problemas
 
 ### 403 em cadastro ou login
 
 Verifique:
 
-1. Se o backend permite acesso anonimo para `/auth/login` e `/auth/register`.
+1. Se o backend permite acesso anônimo para `/auth/login` e `/auth/register`.
 2. Se o `VITE_API_BASE` aponta para a API correta.
-3. Se CORS esta liberado para o host do frontend.
+3. Se CORS está liberado para o host do frontend.
 
-### Comportamento estranho apos alteracoes
+### Comportamento estranho após alterações
 
-1. Limpe cache/localStorage do navegador para remover sessao antiga.
+1. Limpe cache/localStorage do navegador para remover sessão antiga.
 2. Reinicie o frontend com `npm run dev`.
 
 ### PowerShell bloqueando npm.ps1
