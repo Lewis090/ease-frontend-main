@@ -83,12 +83,50 @@ npm run lint
 
 ```text
 src/
-	main.jsx                 # ponto de entrada da aplicação
-	ease-v3-frontend.jsx     # página principal e fluxo de navegação
-	dashboard-module.jsx     # dashboard modular com regras e estados
-	App.jsx                  # componente padrão do template (não utilizado no fluxo principal)
-	App.css
-	index.css
+  main.jsx                 # ponto de entrada da aplicação
+  ease-v3-frontend.jsx     # composição principal e roteamento interno por estado
+  index.css                # estilos globais complementares
+  App.jsx                  # componente padrão do template (referência)
+  App.css
+
+  components/              # componentes compartilhados de UI
+    AnimatedCard.jsx
+    FAQAccordion.jsx
+    Footer.jsx
+    Logo.jsx
+    Nav.jsx
+    Toast.jsx
+    index.js
+
+  dashboard/               # telas e módulos da área autenticada
+    DashboardPage.jsx
+    DashOverview.jsx
+    DashLancamentos.jsx
+    DashDocumentos.jsx
+    DashNotificacoes.jsx
+    index.js
+
+  pages/                   # páginas públicas e de autenticação
+    HomePage.jsx
+    AboutPage.jsx
+    ContactPage.jsx
+    LoginPage.jsx
+    SignupPage.jsx
+    TermsPage.jsx
+    index.js
+
+  hooks/                   # hooks reutilizáveis
+    useViewportFlags.js
+    index.js
+
+  services/                # integração com API
+    api.js
+    index.js
+
+  styles/                  # tema e estilos globais da aplicação
+    theme.js
+    index.js
+
 public/
 index.html
 vite.config.js
