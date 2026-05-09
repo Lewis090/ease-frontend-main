@@ -19,7 +19,7 @@ export default function DashLancamentos({ lancamentos, setLancamentos, show, set
         valor: novo.valor,
         data: novo.data,
       };
-      const res = await api.post(`/transacao?userId=${user.id}`, payload);
+      const res = await api.post(`/transacoes?userId=${user.id}`, payload);
       if (res.id) {
         setLancamentos([res, ...lancamentos]);
         setShow(false);
@@ -47,9 +47,9 @@ export default function DashLancamentos({ lancamentos, setLancamentos, show, set
 
     try {
       const endpoints = [
-        `/transacao/${id}?userId=${user.id}`,
-        `/transacao/${id}`,
-        `/transacao?userId=${user.id}&transacaoId=${id}`,
+        `/transacoes/${id}?userId=${user.id}`,
+        `/transacoes/${id}`,
+        `/transacoes?userId=${user.id}&transacaoId=${id}`,
       ];
 
       let deleted = false;
