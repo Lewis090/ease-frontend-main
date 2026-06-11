@@ -193,7 +193,7 @@ export default function DashboardPage({ setPage, onToast }) {
               })()} · Ano fiscal aberto
             </p>
           </div>
-          {tab === "lancamentos" && <button className="btn-o" onClick={() => setShowModal(true)}>+ Adicionar receita</button>}
+          {tab === "lancamentos" && <button className="btn-o" onClick={() => setShowModal(true)}>+ Add Receita/Despesa</button>}
         </div>
 
         <section id={`panel-${tab}`} role="tabpanel" aria-labelledby={`tab-${tab}`}>
