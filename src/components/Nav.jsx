@@ -3,8 +3,19 @@ import { useViewportFlags } from "../hooks";
 import { C } from "../styles";
 import Logo from "./Logo";
 
-export default function Nav({ page, setPage, darkMode }) {
+function isLoggedIn() {
+  try {
+    const token = localStorage.getItem("token");
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    return !!(token && user?.id);
+  } catch {
+    return false;
+  }
+}
+
+export default function Nav({ page, setPage, darkMode, onLogout }) {
   const [sc, setSc] = useState(false);
+  const [loggedIn, setLoggedIn] = useState(isLoggedIn);
   const { isMobile } = useViewportFlags();
 
   useEffect(() => {
@@ -12,6 +23,11 @@ export default function Nav({ page, setPage, darkMode }) {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  // Atualiza o estado de login sempre que a página mudar
+  useEffect(() => {
+    setLoggedIn(isLoggedIn());
+  }, [page]);
 
   const dark = darkMode && !sc;
 
@@ -50,16 +66,37 @@ export default function Nav({ page, setPage, darkMode }) {
         ))}
       </div>
       <div style={{ display: "flex", gap: isMobile ? 6 : 10 }}>
-        <button
-          className="btn-g"
-          style={{ color: dark ? "rgba(253,250,245,0.72)" : undefined, padding: isMobile ? "8px 10px" : undefined }}
-          onClick={() => setPage("login")}
-        >
-          Entrar
-        </button>
-        <button className="btn-o" style={{ padding: "10px 22px", fontSize: 14 }} onClick={() => setPage("signup")}>
-          Criar conta grátis
-        </button>
+        {loggedIn ? (
+          <>
+            <button
+              className="btn-o"
+              style={{ padding: "10px 22px", fontSize: 14 }}
+              onClick={() => setPage("dashboard")}
+            >
+              Meu Dashboard →
+            </button>
+            <button
+              className="btn-g"
+              style={{ color: dark ? "rgba(253,250,245,0.72)" : C.red, padding: isMobile ? "8px 10px" : undefined, fontWeight: 600 }}
+              onClick={onLogout}
+            >
+              Sair
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              className="btn-g"
+              style={{ color: dark ? "rgba(253,250,245,0.72)" : undefined, padding: isMobile ? "8px 10px" : undefined }}
+              onClick={() => setPage("login")}
+            >
+              Entrar
+            </button>
+            <button className="btn-o" style={{ padding: "10px 22px", fontSize: 14 }} onClick={() => setPage("signup")}>
+              Criar conta grátis
+            </button>
+          </>
+        )}
       </div>
     </nav>
   );
