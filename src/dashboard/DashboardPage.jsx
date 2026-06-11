@@ -44,7 +44,7 @@ function getStoredUser() {
   }
 }
 
-export default function DashboardPage({ setPage, onToast }) {
+export default function DashboardPage({ setPage, onToast, onLogout }) {
   const { isMobile, isTablet } = useViewportFlags();
   const [tab, setTab] = useState("overview");
   const [showModal, setShowModal] = useState(false);
@@ -175,8 +175,8 @@ export default function DashboardPage({ setPage, onToast }) {
           </div>
         </div>
 
-        <button onClick={() => setPage("home")} style={{ background: "rgba(255,255,255,0.05)", border: "none", borderRadius: 10, padding: "10px 14px", color: "rgba(253,250,245,0.32)", fontSize: 12, cursor: "pointer", textAlign: "left", fontFamily: "Inter" }}>
-          ← Voltar ao site
+        <button onClick={onLogout} style={{ background: "rgba(255,255,255,0.05)", border: "none", borderRadius: 10, padding: "10px 14px", color: "rgba(253,250,245,0.32)", fontSize: 12, cursor: "pointer", textAlign: "left", fontFamily: "Inter" }}>
+          🚪 Sair
         </button>
       </aside>
 
