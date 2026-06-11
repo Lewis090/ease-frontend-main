@@ -46,4 +46,36 @@ section{scroll-margin-top:76px;}
 @media (max-width:1100px){.dash-top-grid,.dash-body-grid{grid-template-columns:1fr;}}
 @media (max-width:720px){.dash-stats-grid,.dash-quick-grid,.dash-doc-grid{grid-template-columns:1fr;}}
 @media (max-width:720px){.btn-o,.btn-n,.btn-inv{padding:13px 18px;font-size:14px;}input,textarea,select{padding:13px 14px;font-size:14px;}}
+
+/* ── Print / PDF export ── */
+@media print {
+  .no-print, aside, nav, header, footer, .btn-o, .btn-n, .btn-inv, .btn-g { display: none !important; }
+  body { background: #fff !important; color: #1a2535 !important; font-family: 'Inter', sans-serif; }
+  main { padding: 0 !important; }
+  #relatorio-print-area { display: block !important; }
+  .print-header { display: flex; align-items: center; gap: 20px; padding-bottom: 18px; border-bottom: 2px solid #2D3A49; margin-bottom: 22px; }
+  .print-logo { font-size: 28px; font-weight: 900; color: #EC8A3F; letter-spacing: -1px; }
+  .print-title { font-size: 17px; font-weight: 800; color: #2D3A49; }
+  .print-sub { font-size: 12px; color: #8A98A5; margin-top: 3px; }
+  .print-cards { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin-bottom: 22px; }
+  .print-card { padding: 16px 18px; border-radius: 10px; border: 1px solid #e0ddd8; }
+  .print-card.green { border-left: 4px solid #3DB88A; }
+  .print-card.red { border-left: 4px solid #E05C5C; }
+  .print-card.navy { border-left: 4px solid #2D3A49; }
+  .print-card-label { font-size: 10px; color: #8A98A5; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; margin-bottom: 5px; }
+  .print-card-value { font-size: 20px; font-weight: 900; color: #2D3A49; }
+  .print-card.green .print-card-value { color: #3DB88A; }
+  .print-card.red .print-card-value { color: #E05C5C; }
+  .print-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 18px; }
+  .print-table th { background: #f5f2ec; color: #2D3A49; font-weight: 800; font-size: 10px; text-transform: uppercase; letter-spacing: 0.7px; padding: 9px 12px; text-align: left; border-bottom: 2px solid #e0ddd8; }
+  .print-table td { padding: 9px 12px; border-bottom: 1px solid #edeae4; color: #2D3A49; vertical-align: middle; }
+  .print-table tfoot td { font-weight: 800; border-top: 2px solid #2D3A49; border-bottom: none; font-size: 13px; padding-top: 10px; }
+  .print-badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
+  .badge-green { background: #3DB88A18; color: #3DB88A; }
+  .badge-red { background: #E05C5C18; color: #E05C5C; }
+  .val-green { color: #3DB88A; font-weight: 800; }
+  .val-red { color: #E05C5C; font-weight: 800; }
+  .print-total-row td { background: #f5f2ec; }
+  .print-footer { font-size: 10px; color: #8A98A5; text-align: center; border-top: 1px solid #e0ddd8; padding-top: 12px; margin-top: 8px; }
+}
 `;

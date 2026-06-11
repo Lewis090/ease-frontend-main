@@ -6,6 +6,7 @@ import DashDocumentos from "./DashDocumentos";
 import DashLancamentos from "./DashLancamentos";
 import DashNotificacoes from "./DashNotificacoes";
 import EnhancedDashOverview from "./DashOverview";
+import DashRelatorio from "./DashRelatorio";
 import { useViewportFlags } from "../hooks";
 
 function getStoredUser() {
@@ -83,6 +84,7 @@ export default function DashboardPage({ setPage, onToast }) {
     { id: "lancamentos", icon: "📝", label: "Lançamentos" },
     { id: "documentos", icon: "📁", label: "Documentos" },
     { id: "notificacoes", icon: "🔔", label: "Notificações" },
+    { id: "relatorio", icon: "📄", label: "Relatório" },
   ];
 
   return (
@@ -182,7 +184,14 @@ export default function DashboardPage({ setPage, onToast }) {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: isMobile ? "flex-start" : "center", gap: 12, flexWrap: "wrap", marginBottom: isMobile ? 18 : 30 }}>
           <div>
             <h1 style={{ fontSize: 22, fontWeight: 900, color: C.navy, letterSpacing: "-0.3px" }}>{tabs.find((t) => t.id === tab)?.label}</h1>
-            <p style={{ fontSize: 12, color: C.muted, marginTop: 3 }}>Março 2026 · Ano fiscal aberto</p>
+            <p style={{ fontSize: 12, color: C.muted, marginTop: 3 }}>
+              {(() => {
+                const data = new Date();
+                const mes = data.toLocaleDateString("pt-BR", { month: "long" });
+                const mesCapitalizado = mes.charAt(0).toUpperCase() + mes.slice(1);
+                return `${mesCapitalizado} ${data.getFullYear()}`;
+              })()} · Ano fiscal aberto
+            </p>
           </div>
           {tab === "lancamentos" && <button className="btn-o" onClick={() => setShowModal(true)}>+ Adicionar receita</button>}
         </div>
@@ -192,6 +201,7 @@ export default function DashboardPage({ setPage, onToast }) {
           {tab === "lancamentos" && <DashLancamentos lancamentos={lancamentos} setLancamentos={setLancamentos} show={showModal} setShow={setShowModal} user={user} onToast={onToast} />}
           {tab === "documentos" && <DashDocumentos onToast={onToast} />}
           {tab === "notificacoes" && <DashNotificacoes />}
+          {tab === "relatorio" && <DashRelatorio user={user} onToast={onToast} />}
         </section>
       </main>
     </div>
