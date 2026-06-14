@@ -64,7 +64,12 @@ function LancamentoCard({ lancamento, onDragStart, onRemove, deletingId }) {
   return (
     <div
       draggable
-      onDragStart={(e) => onDragStart(e, lancamento)}
+      onDragStart={(e) => {
+        // stopPropagation garante que apenas este card inicia o drag,
+        // evitando que o evento borbulhe para cards vizinhos e sobrescreva o dragItemRef
+        e.stopPropagation();
+        onDragStart(e, lancamento);
+      }}
       title={`${lancamento.descricao} — R$ ${Number(lancamento.valor).toLocaleString("pt-BR")}`}
       style={{
         background: bg,
@@ -271,10 +276,13 @@ export default function DashCalendario({ lancamentos, setLancamentos, user, onTo
   const handleDragStart = useCallback((e, lancamento) => {
     dragItemRef.current = lancamento;
     e.dataTransfer.effectAllowed = "move";
-    e.dataTransfer.setData("text/plain", lancamento.id);
-    // Feedback visual na thumbnail do drag
+    // Armazena o ID como string no dataTransfer — usado como fonte de verdade no drop
+    // para garantir que o item correto seja identificado mesmo com múltiplos cards no mesmo dia
+    e.dataTransfer.setData("text/plain", String(lancamento.id));
+    // Feedback visual
     e.currentTarget.style.opacity = "0.5";
-    setTimeout(() => { if (e.currentTarget) e.currentTarget.style.opacity = "1"; }, 0);
+    const el = e.currentTarget;
+    requestAnimationFrame(() => { if (el) el.style.opacity = "1"; });
   }, []);
 
   const handleDragOver = useCallback((e, dataAlvo) => {
@@ -294,7 +302,14 @@ export default function DashCalendario({ lancamentos, setLancamentos, user, onTo
     e.preventDefault();
     setDragOverDate(null);
 
-    const item = dragItemRef.current;
+    // Resolve o item pelo ID gravado no dataTransfer (fonte de verdade)
+    // Isso evita o bug de mover o item errado quando há múltiplos cards no mesmo dia,
+    // pois o dragItemRef pode ser sobrescrito por eventos que borbulham entre cards
+    const idTransfer = e.dataTransfer.getData("text/plain");
+    const item = idTransfer
+      ? lancamentos.find(l => String(l.id) === idTransfer) ?? dragItemRef.current
+      : dragItemRef.current;
+
     if (!item) return;
 
     const dataOrigem = (item.data || "").split("T")[0];
@@ -345,6 +360,8 @@ export default function DashCalendario({ lancamentos, setLancamentos, user, onTo
       // Reverte estado
       setLancamentos(anterior);
       onToast?.("Erro ao mover lançamento. Tente novamente.", "error");
+    } finally {
+      dragItemRef.current = null;
     }
   }, [lancamentos, setLancamentos, user, onToast]);
 
