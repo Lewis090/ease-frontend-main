@@ -303,8 +303,6 @@ export default function DashCalendario({ lancamentos, setLancamentos, user, onTo
     setDragOverDate(null);
 
     // Resolve o item pelo ID gravado no dataTransfer (fonte de verdade)
-    // Isso evita o bug de mover o item errado quando há múltiplos cards no mesmo dia,
-    // pois o dragItemRef pode ser sobrescrito por eventos que borbulham entre cards
     const idTransfer = e.dataTransfer.getData("text/plain");
     const item = idTransfer
       ? lancamentos.find(l => String(l.id) === idTransfer) ?? dragItemRef.current
@@ -315,49 +313,55 @@ export default function DashCalendario({ lancamentos, setLancamentos, user, onTo
     const dataOrigem = (item.data || "").split("T")[0];
     if (dataOrigem === dataAlvo) return; // mesma data, nada a fazer
 
-    // Atualização otimista
+    // Atualização otimista: troca a data localmente enquanto a API processa
     const anterior = lancamentos;
     setLancamentos(prev =>
       prev.map(l => l.id === item.id ? { ...l, data: dataAlvo } : l)
     );
 
     try {
-      // Tenta diferentes endpoints (mesmo padrão do DashLancamentos)
-      const payload = { ...item, data: dataAlvo };
-      const endpoints = [
+      // O backend não suporta PUT/PATCH em /transacoes — apenas POST e DELETE.
+      // Estratégia: DELETE do lançamento original + POST com a nova data.
+      const deleteEndpoints = [
         `/transacoes/${item.id}?userId=${user.id}`,
         `/transacoes/${item.id}`,
+        `/transacoes?userId=${user.id}&transacaoId=${item.id}`,
       ];
 
-      let ok = false;
-      for (const ep of endpoints) {
+      let deleted = false;
+      for (const ep of deleteEndpoints) {
         try {
-          await api.put(ep, payload);
-          ok = true;
+          await api.delete(ep);
+          deleted = true;
           break;
         } catch {
           // tenta próximo
         }
       }
 
-      // Se nenhum endpoint funcionou, tenta PATCH
-      if (!ok) {
-        for (const ep of endpoints) {
-          try {
-            await api.patch(ep, { data: dataAlvo });
-            ok = true;
-            break;
-          } catch {
-            // tenta próximo
-          }
-        }
-      }
+      if (!deleted) throw new Error("Não foi possível remover o lançamento original");
 
-      if (!ok) throw new Error("Não foi possível atualizar no servidor");
+      // POST com a nova data para recriar o lançamento
+      const payload = {
+        descricao: item.descricao,
+        tipo: item.tipo,
+        valor: item.valor,
+        data: dataAlvo,
+        ...(item.forma ? { forma: item.forma } : {}),
+      };
+
+      const novoItem = await api.post(`/transacoes?userId=${user.id}`, payload);
+
+      // Substitui o item antigo (id mudou) pelo novo retornado pela API
+      if (novoItem?.id) {
+        setLancamentos(prev =>
+          prev.map(l => l.id === item.id ? { ...novoItem, data: dataAlvo } : l)
+        );
+      }
 
       onToast?.(`Lançamento movido para ${new Date(dataAlvo + "T12:00:00").toLocaleDateString("pt-BR")}.`, "success");
     } catch {
-      // Reverte estado
+      // Reverte estado otimista em caso de erro
       setLancamentos(anterior);
       onToast?.("Erro ao mover lançamento. Tente novamente.", "error");
     } finally {
