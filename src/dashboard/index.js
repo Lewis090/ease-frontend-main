@@ -1,4 +1,6 @@
 export { default as DashboardPage } from "./DashboardPage";
+export { default as DashCalendario } from "./DashCalendario";
+
 export { default as DashDocumentos } from "./DashDocumentos";
 export { default as DashLancamentos } from "./DashLancamentos";
 export { default as DashNotificacoes } from "./DashNotificacoes";

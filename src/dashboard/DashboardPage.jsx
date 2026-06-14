@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Logo } from "../components";
 import { api } from "../services";
 import { C } from "../styles";
+import DashCalendario from "./DashCalendario";
 import DashDocumentos from "./DashDocumentos";
 import DashLancamentos from "./DashLancamentos";
 import DashNotificacoes from "./DashNotificacoes";
@@ -74,7 +75,7 @@ export default function DashboardPage({ setPage, onToast, onLogout }) {
         .get(`/transacoes?userId=${userId}`)
         .then((res) => setLancamentos(res.slice(0, 3)))
         .catch(() => setLancamentos([]));
-    } else if (tab === "lancamentos") {
+    } else if (tab === "lancamentos" || tab === "calendario") {
       api.get(`/transacoes?userId=${userId}`).then(setLancamentos).catch(() => setLancamentos([]));
     }
   }, [tab, userId]);
@@ -82,6 +83,7 @@ export default function DashboardPage({ setPage, onToast, onLogout }) {
   const tabs = [
     { id: "overview", icon: "📊", label: "Visão Geral" },
     { id: "lancamentos", icon: "📝", label: "Lançamentos" },
+    { id: "calendario", icon: "📅", label: "Calendário" },
     { id: "documentos", icon: "📁", label: "Documentos" },
     { id: "notificacoes", icon: "🔔", label: "Notificações" },
     { id: "relatorio", icon: "📄", label: "Relatório" },
@@ -199,6 +201,7 @@ export default function DashboardPage({ setPage, onToast, onLogout }) {
         <section id={`panel-${tab}`} role="tabpanel" aria-labelledby={`tab-${tab}`}>
           {tab === "overview" && <EnhancedDashOverview setTab={setTab} stats={stats} lancamentos={lancamentos} />}
           {tab === "lancamentos" && <DashLancamentos lancamentos={lancamentos} setLancamentos={setLancamentos} show={showModal} setShow={setShowModal} user={user} onToast={onToast} />}
+          {tab === "calendario" && <DashCalendario lancamentos={lancamentos} setLancamentos={setLancamentos} user={user} onToast={onToast} />}
           {tab === "documentos" && <DashDocumentos onToast={onToast} />}
           {tab === "notificacoes" && <DashNotificacoes />}
           {tab === "relatorio" && <DashRelatorio user={user} onToast={onToast} />}
