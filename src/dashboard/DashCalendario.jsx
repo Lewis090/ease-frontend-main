@@ -56,7 +56,7 @@ function gerarCelulas(ano, mes) {
 }
 
 // ── Card de lançamento dentro de cada dia ──
-function LancamentoCard({ lancamento, onDragStart, onRemove, deletingId }) {
+function LancamentoCard({ lancamento, onDragStart, onRemove, deletingId, onTouchStart, onTouchMove, onTouchEnd, isDragging }) {
   const isReceita = lancamento.tipo === "RECEITA";
   const cor = isReceita ? C.green : C.red;
   const bg = isReceita ? `${C.green}18` : `${C.red}18`;
@@ -70,6 +70,12 @@ function LancamentoCard({ lancamento, onDragStart, onRemove, deletingId }) {
         e.stopPropagation();
         onDragStart(e, lancamento);
       }}
+      onTouchStart={onTouchStart ? (e) => {
+        e.stopPropagation();
+        onTouchStart(e, lancamento);
+      } : undefined}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
       title={`${lancamento.descricao} — R$ ${Number(lancamento.valor).toLocaleString("pt-BR")}`}
       style={{
         background: bg,
@@ -82,9 +88,12 @@ function LancamentoCard({ lancamento, onDragStart, onRemove, deletingId }) {
         alignItems: "center",
         justifyContent: "space-between",
         gap: 4,
-        transition: "opacity .15s, transform .15s",
-        opacity: deletingId === lancamento.id ? 0.4 : 1,
+        transition: "opacity .15s, transform .15s, box-shadow .15s",
+        opacity: deletingId === lancamento.id ? 0.4 : isDragging ? 0.6 : 1,
+        transform: isDragging ? "scale(1.04)" : "none",
+        boxShadow: isDragging ? "0 4px 12px rgba(0,0,0,0.15)" : "none",
         userSelect: "none",
+        touchAction: onTouchStart ? "none" : "auto",
       }}
     >
       <div style={{ minWidth: 0 }}>
@@ -112,6 +121,7 @@ function LancamentoCard({ lancamento, onDragStart, onRemove, deletingId }) {
       </div>
       <button
         onClick={(e) => { e.stopPropagation(); onRemove(lancamento); }}
+        onTouchStart={(e) => e.stopPropagation()}
         disabled={deletingId === lancamento.id}
         title="Remover lançamento"
         style={{
@@ -244,7 +254,7 @@ function DiaCell({ celula, lancamentosDia, dragOverDate, onDragStart, onDragOver
 }
 
 // ── Componente principal ──
-export default function DashCalendario({ lancamentos, setLancamentos, user, onToast }) {
+export default function DashCalendario({ lancamentos, setLancamentos, user, onToast, setShow }) {
   const { isMobile } = useViewportFlags();
   const hoje = toLocalISO(new Date());
   const now = new Date();
@@ -252,6 +262,9 @@ export default function DashCalendario({ lancamentos, setLancamentos, user, onTo
   const [mes, setMes] = useState(now.getMonth());
   const [ano, setAno] = useState(now.getFullYear());
   const [dragOverDate, setDragOverDate] = useState(null);
+  const [touchDragOverDate, setTouchDragOverDate] = useState(null);
+  const [isTouchDragging, setIsTouchDragging] = useState(false);
+  const [touchDraggedItemId, setTouchDraggedItemId] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
   const dragItemRef = useRef(null);
 
@@ -260,6 +273,16 @@ export default function DashCalendario({ lancamentos, setLancamentos, user, onTo
 
   // Células do calendário (grid completo)
   const celulas = useMemo(() => gerarCelulas(ano, mes), [ano, mes]);
+
+  // Dias do mês atual para a linha do tempo mobile
+  const diasDoMes = useMemo(() => {
+    const totalDias = new Date(ano, mes + 1, 0).getDate();
+    const lista = [];
+    for (let d = 1; d <= totalDias; d++) {
+      lista.push(new Date(ano, mes, d));
+    }
+    return lista;
+  }, [ano, mes]);
 
   // Navegação de mês
   const irMesAnterior = () => {
@@ -272,14 +295,11 @@ export default function DashCalendario({ lancamentos, setLancamentos, user, onTo
   };
   const irHoje = () => { setMes(now.getMonth()); setAno(now.getFullYear()); };
 
-  // ── Drag handlers ──
+  // ── Drag handlers (Desktop) ──
   const handleDragStart = useCallback((e, lancamento) => {
     dragItemRef.current = lancamento;
     e.dataTransfer.effectAllowed = "move";
-    // Armazena o ID como string no dataTransfer — usado como fonte de verdade no drop
-    // para garantir que o item correto seja identificado mesmo com múltiplos cards no mesmo dia
     e.dataTransfer.setData("text/plain", String(lancamento.id));
-    // Feedback visual
     e.currentTarget.style.opacity = "0.5";
     const el = e.currentTarget;
     requestAnimationFrame(() => { if (el) el.style.opacity = "1"; });
@@ -292,18 +312,18 @@ export default function DashCalendario({ lancamentos, setLancamentos, user, onTo
   }, []);
 
   const handleDragLeave = useCallback((e) => {
-    // Só limpa se realmente saiu da célula (não de filhos)
     if (!e.currentTarget.contains(e.relatedTarget)) {
       setDragOverDate(null);
     }
   }, []);
 
   const handleDrop = useCallback(async (e, dataAlvo) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     setDragOverDate(null);
+    setTouchDragOverDate(null);
 
     // Resolve o item pelo ID gravado no dataTransfer (fonte de verdade)
-    const idTransfer = e.dataTransfer.getData("text/plain");
+    const idTransfer = e?.dataTransfer?.getData("text/plain");
     const item = idTransfer
       ? lancamentos.find(l => String(l.id) === idTransfer) ?? dragItemRef.current
       : dragItemRef.current;
@@ -320,8 +340,6 @@ export default function DashCalendario({ lancamentos, setLancamentos, user, onTo
     );
 
     try {
-      // O backend não suporta PUT/PATCH em /transacoes — apenas POST e DELETE.
-      // Estratégia: DELETE do lançamento original + POST com a nova data.
       const deleteEndpoints = [
         `/transacoes/${item.id}?userId=${user.id}`,
         `/transacoes/${item.id}`,
@@ -341,7 +359,6 @@ export default function DashCalendario({ lancamentos, setLancamentos, user, onTo
 
       if (!deleted) throw new Error("Não foi possível remover o lançamento original");
 
-      // POST com a nova data para recriar o lançamento
       const payload = {
         descricao: item.descricao,
         tipo: item.tipo,
@@ -352,7 +369,6 @@ export default function DashCalendario({ lancamentos, setLancamentos, user, onTo
 
       const novoItem = await api.post(`/transacoes?userId=${user.id}`, payload);
 
-      // Substitui o item antigo (id mudou) pelo novo retornado pela API
       if (novoItem?.id) {
         setLancamentos(prev =>
           prev.map(l => l.id === item.id ? { ...novoItem, tipo: item.tipo, data: dataAlvo } : l)
@@ -361,13 +377,43 @@ export default function DashCalendario({ lancamentos, setLancamentos, user, onTo
 
       onToast?.(`Lançamento movido para ${new Date(dataAlvo + "T12:00:00").toLocaleDateString("pt-BR")}.`, "success");
     } catch {
-      // Reverte estado otimista em caso de erro
       setLancamentos(anterior);
       onToast?.("Erro ao mover lançamento. Tente novamente.", "error");
     } finally {
       dragItemRef.current = null;
     }
   }, [lancamentos, setLancamentos, user, onToast]);
+
+  // ── Touch Drag Handlers (Mobile) ──
+  const handleTouchStart = useCallback((e, lancamento) => {
+    dragItemRef.current = lancamento;
+    setIsTouchDragging(true);
+    setTouchDraggedItemId(lancamento.id);
+  }, []);
+
+  const handleTouchMove = useCallback((e) => {
+    if (e.cancelable) e.preventDefault();
+    const touch = e.touches[0];
+    const elem = document.elementFromPoint(touch.clientX, touch.clientY);
+    const dayElem = elem?.closest("[data-date]");
+    if (dayElem) {
+      const targetDate = dayElem.getAttribute("data-date");
+      setTouchDragOverDate(targetDate);
+    } else {
+      setTouchDragOverDate(null);
+    }
+  }, []);
+
+  const handleTouchEnd = useCallback((e) => {
+    setIsTouchDragging(false);
+    setTouchDraggedItemId(null);
+    setTouchDragOverDate(currentDate => {
+      if (currentDate && dragItemRef.current) {
+        handleDrop(null, currentDate);
+      }
+      return null;
+    });
+  }, [handleDrop]);
 
   // Remover lançamento
   const handleRemove = useCallback(async (item) => {
@@ -419,17 +465,10 @@ export default function DashCalendario({ lancamentos, setLancamentos, user, onTo
   const totalDespesaMes = lancamentosDoMes.filter(l => l.tipo !== "RECEITA").reduce((s, l) => s + Number(l.valor), 0);
   const saldoMes = totalReceitaMes - totalDespesaMes;
 
-  // ── Vista mobile: lista por dia ──
+  // ── Vista mobile: linha do tempo do calendário ──
   if (isMobile) {
-    const diasComLancamentos = Object.entries(lancamentosPorData)
-      .filter(([chave]) => {
-        const [y, m] = chave.split("-").map(Number);
-        return y === ano && (m - 1) === mes;
-      })
-      .sort(([a], [b]) => a.localeCompare(b));
-
     return (
-      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 16, position: "relative", paddingBottom: 80 }}>
         {/* Header */}
         <CalendarioHeader
           mes={mes} ano={ano}
@@ -437,27 +476,167 @@ export default function DashCalendario({ lancamentos, setLancamentos, user, onTo
           totalReceitaMes={totalReceitaMes} totalDespesaMes={totalDespesaMes} saldoMes={saldoMes}
           isMobile
         />
-        {diasComLancamentos.length === 0 ? (
-          <div className="nc" style={{ padding: 32, textAlign: "center", color: C.muted, fontSize: 13 }}>
-            <div style={{ fontSize: 36, marginBottom: 10 }}>📭</div>
-            Nenhum lançamento em {MESES[mes]} {ano}
+
+        {/* Linha do Tempo (Timeline) */}
+        <div className="nc" style={{ padding: "20px 14px", position: "relative" }}>
+          {/* Linha vertical da timeline */}
+          <div style={{
+            position: "absolute",
+            left: 62, // centralizado sob a coluna de timeline
+            top: 24,
+            bottom: 24,
+            width: 2,
+            background: `${C.primary}25`,
+            zIndex: 1
+          }} />
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {diasDoMes.map((date) => {
+              const chave = toLocalISO(date);
+              const isHoje = chave === hoje;
+              const items = lancamentosPorData[chave] || [];
+              const isDragOver = touchDragOverDate === chave;
+              const diaSemana = DIAS_SEMANA[date.getDay()];
+
+              return (
+                <div
+                  key={chave}
+                  data-date={chave}
+                  style={{
+                    display: "flex",
+                    alignItems: "flex-start",
+                    position: "relative",
+                    zIndex: 2,
+                    background: isDragOver ? `${C.primary}12` : "transparent",
+                    border: isDragOver ? `1.5px dashed ${C.primary}` : "1.5px solid transparent",
+                    borderRadius: 12,
+                    padding: "6px 8px",
+                    transition: "all 0.15s",
+                    minHeight: items.length > 0 ? 75 : 48,
+                  }}
+                >
+                  {/* Coluna da Esquerda: Data */}
+                  <div style={{
+                    width: 40,
+                    textAlign: "right",
+                    paddingRight: 10,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "flex-end",
+                    justifyContent: "center",
+                    flexShrink: 0
+                  }}>
+                    <span style={{
+                      fontSize: 16,
+                      fontWeight: 800,
+                      color: isHoje ? C.primary : C.navy,
+                      lineHeight: 1.1
+                    }}>
+                      {date.getDate()}
+                    </span>
+                    <span style={{
+                      fontSize: 9,
+                      fontWeight: 600,
+                      color: C.muted,
+                      textTransform: "uppercase"
+                    }}>
+                      {diaSemana}
+                    </span>
+                  </div>
+
+                  {/* Coluna do Meio: Nó da Timeline */}
+                  <div style={{
+                    width: 14,
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    flexShrink: 0,
+                    marginTop: 4,
+                  }}>
+                    <div style={{
+                      width: isHoje ? 10 : 7,
+                      height: isHoje ? 10 : 7,
+                      borderRadius: "50%",
+                      background: isHoje ? C.primary : isDragOver ? C.primary : `${C.navy}44`,
+                      border: isHoje ? `2px solid ${C.light}` : "none",
+                      boxShadow: isHoje ? `0 0 0 2px ${C.primary}` : "none",
+                      zIndex: 2,
+                      transition: "all 0.15s"
+                    }} />
+                  </div>
+
+                  {/* Coluna da Direita: Lançamentos */}
+                  <div style={{
+                    flex: 1,
+                    paddingLeft: 12,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 6,
+                    justifyContent: "center",
+                  }}>
+                    {items.map(l => (
+                      <LancamentoCard
+                        key={l.id}
+                        lancamento={l}
+                        onDragStart={handleDragStart}
+                        onRemove={handleRemove}
+                        deletingId={deletingId}
+                        onTouchStart={handleTouchStart}
+                        onTouchMove={handleTouchMove}
+                        onTouchEnd={handleTouchEnd}
+                        isDragging={touchDraggedItemId === l.id}
+                      />
+                    ))}
+                    {items.length === 0 && (
+                      <div style={{
+                        fontSize: 10,
+                        color: C.muted,
+                        fontStyle: "italic",
+                        opacity: 0.45,
+                        padding: "6px 0",
+                        userSelect: "none"
+                      }}>
+                        Nenhum lançamento
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
-        ) : (
-          diasComLancamentos.map(([chave, items]) => (
-            <div key={chave} className="nc" style={{ padding: "14px 16px" }}>
-              <div style={{ fontSize: 12, fontWeight: 800, color: C.navy, marginBottom: 10 }}>
-                {new Date(chave + "T12:00:00").toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })}
-              </div>
-              {items.map(l => (
-                <LancamentoCard
-                  key={l.id} lancamento={l}
-                  onDragStart={handleDragStart}
-                  onRemove={handleRemove}
-                  deletingId={deletingId}
-                />
-              ))}
-            </div>
-          ))
+        </div>
+
+        {/* Botão de Ação Flutuante (FAB) */}
+        {setShow && (
+          <button
+            onClick={() => setShow(true)}
+            style={{
+              position: "fixed",
+              bottom: 24,
+              left: "50%",
+              transform: "translateX(-50%)",
+              width: 56,
+              height: 56,
+              borderRadius: "50%",
+              background: C.primary,
+              color: C.light,
+              border: "none",
+              fontSize: 28,
+              fontWeight: "bold",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              boxShadow: "0px 6px 16px rgba(20,28,38,0.22)",
+              cursor: "pointer",
+              zIndex: 1000,
+              transition: "transform 0.15s, background-color 0.15s",
+              touchAction: "none"
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.transform = "translateX(-50%) scale(1.05)"}
+            onMouseLeave={(e) => e.currentTarget.style.transform = "translateX(-50%)"}
+          >
+            +
+          </button>
         )}
       </div>
     );

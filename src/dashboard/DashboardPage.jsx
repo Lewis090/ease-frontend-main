@@ -201,7 +201,7 @@ export default function DashboardPage({ setPage, onToast, onLogout }) {
         <section id={`panel-${tab}`} role="tabpanel" aria-labelledby={`tab-${tab}`}>
           {tab === "overview" && <EnhancedDashOverview setTab={setTab} stats={stats} lancamentos={lancamentos} />}
           {tab === "lancamentos" && <DashLancamentos lancamentos={lancamentos} setLancamentos={setLancamentos} show={showModal} setShow={setShowModal} user={user} onToast={onToast} />}
-          {tab === "calendario" && <DashCalendario lancamentos={lancamentos} setLancamentos={setLancamentos} user={user} onToast={onToast} />}
+          {tab === "calendario" && <DashCalendario lancamentos={lancamentos} setLancamentos={setLancamentos} user={user} onToast={onToast} setShow={setShowModal} />}
           {tab === "documentos" && <DashDocumentos onToast={onToast} />}
           {tab === "notificacoes" && <DashNotificacoes />}
           {tab === "relatorio" && <DashRelatorio user={user} onToast={onToast} />}
