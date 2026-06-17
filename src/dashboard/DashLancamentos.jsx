@@ -14,7 +14,7 @@ export default function DashLancamentos({ lancamentos, setLancamentos, show, set
     setLoading(true);
     try {
       const payload = {
-        descricao: novo.desc, // Removido o caractere bugado "!" daqui
+        descricao: novo.desc,
         tipo: novo.tipo,
         valor: novo.valor,
         data: novo.data,
@@ -36,39 +36,15 @@ export default function DashLancamentos({ lancamentos, setLancamentos, show, set
 
   const remove = async (item) => {
     const id = item?.id;
-    if (!id) {
-      setLancamentos(lancamentos.filter((l) => l.id !== item.id));
-      onToast?.("Lançamento removido.", "success");
-      return;
-    }
-
+    if (!id) return;
     const previous = lancamentos;
     setDeletingId(id);
     setLancamentos(lancamentos.filter((l) => l.id !== id));
-
     try {
-      const endpoints = [
-        `/transacoes/${id}?userId=${user.id}`,
-        `/transacoes/${id}`,
-        `/transacoes?userId=${user.id}&transacaoId=${id}`,
-      ];
-
-      let deleted = false;
-      for (const endpoint of endpoints) {
-        try {
-          await api.delete(endpoint);
-          deleted = true;
-          break;
-        } catch {
-          // Continua tentando os fallbacks de endpoints
-        }
-      }
-
-      if (!deleted) throw new Error();
+      await api.delete(`/transacoes/${id}?userId=${user.id}`);
       onToast?.("Lançamento removido com sucesso.", "success");
     } catch {
       setLancamentos(previous);
-      onToast?.("Erro ao remover lançamento.", "error");
     } finally {
       setDeletingId(null);
     }
@@ -76,8 +52,9 @@ export default function DashLancamentos({ lancamentos, setLancamentos, show, set
 
   return (
     <div>
+      {/* ESTE COMPONENTE CAI DE FORMA FLUÍDA NA TELA EM QUE FOR CHAMADO */}
       {show && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 2000, background: "rgba(20,28,38,0.6)", backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", padding: isMobile ? 12 : 20 }}>
+        <div style={{ position: "fixed", inset: 0, zIndex: 5000, background: "rgba(20,28,38,0.6)", backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", padding: isMobile ? 12 : 20 }}>
           <div className="nc" style={{ width: "min(430px, 100%)", maxHeight: "calc(100vh - 24px)", overflowY: "auto", padding: isMobile ? 22 : 38 }}>
             <h3 style={{ fontSize: isMobile ? 18 : 20, fontWeight: 900, color: C.navy, marginBottom: 24 }}>+ Novo lançamento</h3>
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -139,6 +116,7 @@ export default function DashLancamentos({ lancamentos, setLancamentos, show, set
         </div>
       )}
 
+      {/* RENDERIZA A LISTA HISTÓRICA COMPLETA APENAS SE FOR ACESSADO PELA ABA DE LANÇAMENTOS */}
       {!apenasModal && (
         <div className="nc" style={{ padding: isMobile ? 16 : 24 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>

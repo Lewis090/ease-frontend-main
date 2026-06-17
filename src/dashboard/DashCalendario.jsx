@@ -2,7 +2,7 @@ import { useMemo, useState, useRef, useCallback } from "react";
 import { api } from "../services";
 import { C } from "../styles";
 import { useViewportFlags } from "../hooks";
-import DashLancamentos from "./DashLancamentos";
+import DashLancamentos from "./DashLancamentos"; // Importação essencial para carregar o modal aqui
 
 const DIAS_SEMANA = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 const MESES = [
@@ -128,8 +128,6 @@ function LancamentoCard({ lancamento, onDragStart, onRemove, deletingId, onTouch
           flexShrink: 0,
           transition: "color .15s",
         }}
-        onMouseEnter={(e) => (e.currentTarget.style.color = C.red)}
-        onMouseLeave={(e) => (e.currentTarget.style.color = C.muted)}
       >
         ×
       </button>
@@ -155,25 +153,12 @@ function DiaCell({ celula, lancamentosDia, dragOverDate, onDragStart, onDragOver
         minHeight: 100,
         borderRadius: 12,
         padding: "8px 8px 6px",
-        background: isDragOver
-          ? `${C.primary}12`
-          : isHoje
-          ? `${C.primary}0A`
-          : isCurrentMonth
-          ? C.bgL
-          : `${C.bg}88`,
-        border: isDragOver
-          ? `2px dashed ${C.primary}`
-          : isHoje
-          ? `2px solid ${C.primary}55`
-          : "2px solid transparent",
-        boxShadow: isCurrentMonth
-          ? `4px 4px 12px ${C.sdark}, -4px -4px 12px rgba(255,255,255,0.7)`
-          : "none",
+        background: isDragOver ? `${C.primary}12` : isHoje ? `${C.primary}0A` : isCurrentMonth ? C.bgL : `${C.bg}88`,
+        border: isDragOver ? `2px dashed ${C.primary}` : isHoje ? `2px solid ${C.primary}55` : "2px solid transparent",
+        boxShadow: isCurrentMonth ? `4px 4px 12px ${C.sdark}, -4px -4px 12px rgba(255,255,255,0.7)` : "none",
         opacity: isCurrentMonth ? 1 : 0.45,
         transition: "all .15s",
         position: "relative",
-        cursor: "default",
       }}
     >
       <div style={{
@@ -208,13 +193,7 @@ function DiaCell({ celula, lancamentosDia, dragOverDate, onDragStart, onDragOver
 
       <div>
         {lancamentosDia.slice(0, 3).map((l) => (
-          <LancamentoCard
-            key={l.id}
-            lancamento={l}
-            onDragStart={onDragStart}
-            onRemove={onRemove}
-            deletingId={deletingId}
-          />
+          <LancamentoCard key={l.id} lancamento={l} onDragStart={onDragStart} onRemove={onRemove} deletingId={deletingId} />
         ))}
         {lancamentosDia.length > 3 && (
           <div style={{ fontSize: 9, color: C.muted, fontWeight: 700, paddingLeft: 4 }}>
@@ -222,20 +201,6 @@ function DiaCell({ celula, lancamentosDia, dragOverDate, onDragStart, onDragOver
           </div>
         )}
       </div>
-
-      {isDragOver && (
-        <div style={{
-          position: "absolute",
-          inset: 0,
-          borderRadius: 12,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          pointerEvents: "none",
-        }}>
-          <span style={{ fontSize: 20, opacity: 0.4 }}>📌</span>
-        </div>
-      )}
     </div>
   );
 }
@@ -281,14 +246,10 @@ export default function DashCalendario({ lancamentos, setLancamentos, user, onTo
     dragItemRef.current = lancamento;
     e.dataTransfer.effectAllowed = "move";
     e.dataTransfer.setData("text/plain", String(lancamento.id));
-    e.currentTarget.style.opacity = "0.5";
-    const el = e.currentTarget;
-    requestAnimationFrame(() => { if (el) el.style.opacity = "1"; });
   }, []);
 
   const handleDragOver = useCallback((e, dataAlvo) => {
     e.preventDefault();
-    e.dataTransfer.dropEffect = "move";
     setDragOverDate(dataAlvo);
   }, []);
 
@@ -304,62 +265,26 @@ export default function DashCalendario({ lancamentos, setLancamentos, user, onTo
     setTouchDragOverDate(null);
 
     const idTransfer = e?.dataTransfer?.getData("text/plain");
-    const item = idTransfer
-      ? lancamentos.find(l => String(l.id) === idTransfer) ?? dragItemRef.current
-      : dragItemRef.current;
+    const item = idTransfer ? lancamentos.find(l => String(l.id) === idTransfer) : dragItemRef.current;
 
     if (!item) return;
-
     const dataOrigem = (item.data || "").split("T")[0];
     if (dataOrigem === dataAlvo) return;
 
     const anterior = lancamentos;
-    setLancamentos(prev =>
-      prev.map(l => l.id === item.id ? { ...l, data: dataAlvo } : l)
-    );
+    setLancamentos(prev => prev.map(l => l.id === item.id ? { ...l, data: dataAlvo } : l));
 
     try {
-      const deleteEndpoints = [
-        `/transacoes/${item.id}?userId=${user.id}`,
-        `/transacoes/${item.id}`,
-        `/transacoes?userId=${user.id}&transacaoId=${item.id}`,
-      ];
-
-      let deleted = false;
-      for (const ep of deleteEndpoints) {
-        try {
-          await api.delete(ep);
-          deleted = true;
-          break;
-        } catch {
-          // tenta próximo
-        }
-      }
-
-      if (!deleted) throw new Error("Não foi possível remover o lançamento original");
-
-      const payload = {
-        descricao: item.descricao,
-        tipo: item.tipo,
-        valor: item.valor,
-        data: dataAlvo,
-        ...(item.forma ? { forma: item.forma } : {}),
-      };
-
+      await api.delete(`/transacoes/${item.id}?userId=${user.id}`);
+      const payload = { descricao: item.descricao, tipo: item.tipo, valor: item.valor, data: dataAlvo };
       const novoItem = await api.post(`/transacoes?userId=${user.id}`, payload);
-
       if (novoItem?.id) {
-        setLancamentos(prev =>
-          prev.map(l => l.id === item.id ? { ...novoItem, tipo: item.tipo, data: dataAlvo } : l)
-        );
+        setLancamentos(prev => prev.map(l => l.id === item.id ? { ...novoItem, tipo: item.tipo, data: dataAlvo } : l));
       }
-
-      onToast?.(`Lançamento movido para ${new Date(dataAlvo + "T12:00:00").toLocaleDateString("pt-BR")}.`, "success");
+      onToast?.("Lançamento movido com sucesso.", "success");
     } catch {
       setLancamentos(anterior);
-      onToast?.("Erro ao mover lançamento. Tente novamente.", "error");
-    } finally {
-      dragItemRef.current = null;
+      onToast?.("Erro ao mover lançamento.", "error");
     }
   }, [lancamentos, setLancamentos, user, onToast]);
 
@@ -378,13 +303,10 @@ export default function DashCalendario({ lancamentos, setLancamentos, user, onTo
       const targetDate = dayElem.getAttribute("data-date");
       touchDragOverDateRef.current = targetDate;
       setTouchDragOverDate(targetDate);
-    } else {
-      touchDragOverDateRef.current = null;
-      setTouchDragOverDate(null);
     }
   }, []);
 
-  const handleTouchEnd = useCallback((e) => {
+  const handleTouchEnd = useCallback(() => {
     setIsTouchDragging(false);
     setTouchDraggedItemId(null);
     setTouchDragOverDate(null);
@@ -398,36 +320,13 @@ export default function DashCalendario({ lancamentos, setLancamentos, user, onTo
   const handleRemove = useCallback(async (item) => {
     const id = item?.id;
     if (!id) return;
-
     const anterior = lancamentos;
-    setDeletingId(id);
     setLancamentos(prev => prev.filter(l => l.id !== id));
-
     try {
-      const endpoints = [
-        `/transacoes/${id}?userId=${user.id}`,
-        `/transacoes/${id}`,
-        `/transacoes?userId=${user.id}&transacaoId=${id}`,
-      ];
-
-      let deleted = false;
-      for (const ep of endpoints) {
-        try {
-          await api.delete(ep);
-          deleted = true;
-          break;
-        } catch {
-          // tenta próximo
-        }
-      }
-
-      if (!deleted) throw new Error("Falha ao remover no servidor");
-      onToast?.("Lançamento removido com sucesso.", "success");
+      await api.delete(`/transacoes/${id}?userId=${user.id}`);
+      onToast?.("Lançamento removido.", "success");
     } catch {
       setLancamentos(anterior);
-      onToast?.("Erro ao remover lançamento.", "error");
-    } finally {
-      setDeletingId(null);
     }
   }, [lancamentos, setLancamentos, user, onToast]);
 
@@ -443,147 +342,45 @@ export default function DashCalendario({ lancamentos, setLancamentos, user, onTo
   const totalDespesaMes = lancamentosDoMes.filter(l => l.tipo !== "RECEITA").reduce((s, l) => s + Number(l.valor), 0);
   const saldoMes = totalReceitaMes - totalDespesaMes;
 
+  // ── RENDERIZAÇÃO MOBILE ──
   if (isMobile) {
     return (
       <div style={{ display: "flex", flexDirection: "column", gap: 16, position: "relative", paddingBottom: 80 }}>
         
-        {/* O MODAL AGORA ESTÁ INJETADO AQUI DENTRO DO CALENDÁRIO MOBILE */}
+        {/* INJETADO O FORMULÁRIO PURAMENTE COMO MODAL AQUI DENTRO */}
         <DashLancamentos 
-          lancamentos={lancamentos} 
-          setLancamentos={setLancamentos} 
-          show={show} 
-          setShow={setShow} 
-          user={user} 
-          onToast={onToast} 
+          lancamentos={lancamentos} setLancamentos={setLancamentos} 
+          show={show} setShow={setShow} user={user} onToast={onToast} 
           apenasModal={true}
         />
 
-        {/* Header */}
         <CalendarioHeader
-          mes={mes} ano={ano}
-          irMesAnterior={irMesAnterior} irProximoMes={irProximoMes} irHoje={irHoje}
-          totalReceitaMes={totalReceitaMes} totalDespesaMes={totalDespesaMes} saldoMes={saldoMes}
-          isMobile
+          mes={mes} ano={ano} irMesAnterior={irMesAnterior} irProximoMes={irProximoMes} irHoje={irHoje}
+          totalReceitaMes={totalReceitaMes} totalDespesaMes={totalDespesaMes} saldoMes={saldoMes} isMobile
         />
 
-        {/* Linha do Tempo (Timeline) */}
         <div className="nc" style={{ padding: "20px 14px", position: "relative" }}>
-          <div style={{
-            position: "absolute",
-            left: 62,
-            top: 24,
-            bottom: 24,
-            width: 2,
-            background: `${C.primary}25`,
-            zIndex: 1
-          }} />
-
+          <div style={{ position: "absolute", left: 62, top: 24, bottom: 24, width: 2, background: `${C.primary}25`, zIndex: 1 }} />
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {diasDoMes.map((date) => {
               const chave = toLocalISO(date);
               const isHoje = chave === hoje;
               const items = lancamentosPorData[chave] || [];
               const isDragOver = touchDragOverDate === chave;
-              const diaSemana = DIAS_SEMANA[date.getDay()];
-
               return (
-                <div
-                  key={chave}
-                  data-date={chave}
-                  style={{
-                    display: "flex",
-                    alignItems: "flex-start",
-                    position: "relative",
-                    zIndex: 2,
-                    background: isDragOver ? `${C.primary}12` : "transparent",
-                    border: isDragOver ? `1.5px dashed ${C.primary}` : "1.5px solid transparent",
-                    borderRadius: 12,
-                    padding: "6px 8px",
-                    transition: "all 0.15s",
-                    minHeight: items.length > 0 ? 75 : 48,
-                  }}
-                >
-                  <div style={{
-                    width: 40,
-                    textAlign: "right",
-                    paddingRight: 10,
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "flex-end",
-                    justifyContent: "center",
-                    flexShrink: 0
-                  }}>
-                    <span style={{
-                      fontSize: 16,
-                      fontWeight: 800,
-                      color: isHoje ? C.primary : C.navy,
-                      lineHeight: 1.1
-                    }}>
-                      {date.getDate()}
-                    </span>
-                    <span style={{
-                      fontSize: 9,
-                      fontWeight: 600,
-                      color: C.muted,
-                      textTransform: "uppercase"
-                    }}>
-                      {diaSemana}
-                    </span>
+                <div key={chave} data-date={chave} style={{ display: "flex", alignItems: "flex-start", position: "relative", zIndex: 2, background: isDragOver ? `${C.primary}12` : "transparent", borderRadius: 12, padding: "6px 8px", minHeight: items.length > 0 ? 75 : 48 }}>
+                  <div style={{ width: 40, textAlign: "right", paddingRight: 10, display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
+                    <span style={{ fontSize: 16, fontWeight: 800, color: isHoje ? C.primary : C.navy }}>{date.getDate()}</span>
+                    <span style={{ fontSize: 9, color: C.muted }}>{DIAS_SEMANA[date.getDay()]}</span>
                   </div>
-
-                  <div style={{
-                    width: 14,
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    flexShrink: 0,
-                    marginTop: 4,
-                  }}>
-                    <div style={{
-                      width: isHoje ? 10 : 7,
-                      height: isHoje ? 10 : 7,
-                      borderRadius: "50%",
-                      background: isHoje ? C.primary : isDragOver ? C.primary : `${C.navy}44`,
-                      border: isHoje ? `2px solid ${C.light}` : "none",
-                      boxShadow: isHoje ? `0 0 0 2px ${C.primary}` : "none",
-                      zIndex: 2,
-                      transition: "all 0.15s"
-                    }} />
+                  <div style={{ width: 14, display: "flex", justifyContent: "center", marginTop: 4 }}>
+                    <div style={{ width: isHoje ? 10 : 7, height: isHoje ? 10 : 7, borderRadius: "50%", background: isHoje ? C.primary : `${C.navy}44` }} />
                   </div>
-
-                  <div style={{
-                    flex: 1,
-                    paddingLeft: 12,
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 6,
-                    justifyContent: "center",
-                  }}>
+                  <div style={{ flex: 1, paddingLeft: 12, display: "flex", flexDirection: "column", gap: 6 }}>
                     {items.map(l => (
-                      <LancamentoCard
-                        key={l.id}
-                        lancamento={l}
-                        onDragStart={handleDragStart}
-                        onRemove={handleRemove}
-                        deletingId={deletingId}
-                        onTouchStart={handleTouchStart}
-                        onTouchMove={handleTouchMove}
-                        onTouchEnd={handleTouchEnd}
-                        isDragging={touchDraggedItemId === l.id}
-                      />
+                      <LancamentoCard key={l.id} lancamento={l} onDragStart={handleDragStart} onRemove={handleRemove} deletingId={deletingId} onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd} isDragging={touchDraggedItemId === l.id} />
                     ))}
-                    {items.length === 0 && (
-                      <div style={{
-                        fontSize: 10,
-                        color: C.muted,
-                        fontStyle: "italic",
-                        opacity: 0.45,
-                        padding: "6px 0",
-                        userSelect: "none"
-                      }}>
-                        Nenhum lançamento
-                      </div>
-                    )}
+                    {items.length === 0 && <div style={{ fontSize: 10, color: C.muted, opacity: 0.4, padding: "6px 0" }}>Nenhum lançamento</div>}
                   </div>
                 </div>
               );
@@ -591,31 +388,10 @@ export default function DashCalendario({ lancamentos, setLancamentos, user, onTo
           </div>
         </div>
 
-        {/* Botão de Ação Flutuante (FAB) limpo sem conflito de toques */}
         {setShow && (
           <button
             onClick={() => setShow(true)}
-            style={{
-              position: "fixed",
-              bottom: 24,
-              left: "50%",
-              transform: "translateX(-50%)",
-              width: 56,
-              height: 56,
-              borderRadius: "50%",
-              background: C.primary,
-              color: C.light,
-              border: "none",
-              fontSize: 28,
-              fontWeight: "bold",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              boxShadow: "0px 6px 16px rgba(20,28,38,0.22)",
-              cursor: "pointer",
-              zIndex: 1000,
-              transition: "box-shadow 0.15s, background-color 0.15s",
-            }}
+            style={{ position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", width: 56, height: 56, borderRadius: "50%", background: C.primary, color: C.light, border: "none", fontSize: 28, fontWeight: "bold", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0px 6px 16px rgba(20,28,38,0.22)", zIndex: 1000 }}
           >
             +
           </button>
@@ -624,62 +400,31 @@ export default function DashCalendario({ lancamentos, setLancamentos, user, onTo
     );
   }
 
+  // ── RENDERIZAÇÃO DESKTOP ──
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      {/* SE O USUÁRIO CLICAR NO DESKTOP TAMBÉM ABRE O MODAL SEM ERROS */}
+      <DashLancamentos 
+        lancamentos={lancamentos} setLancamentos={setLancamentos} 
+        show={show} setShow={setShow} user={user} onToast={onToast} 
+        apenasModal={true}
+      />
+
       <CalendarioHeader
-        mes={mes} ano={ano}
-        irMesAnterior={irMesAnterior} irProximoMes={irProximoMes} irHoje={irHoje}
+        mes={mes} ano={ano} irMesAnterior={irMesAnterior} irProximoMes={irProximoMes} irHoje={irHoje}
         totalReceitaMes={totalReceitaMes} totalDespesaMes={totalDespesaMes} saldoMes={saldoMes}
       />
 
       <div className="nc" style={{ padding: 20 }}>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 8, marginBottom: 8 }}>
           {DIAS_SEMANA.map(d => (
-            <div key={d} style={{
-              textAlign: "center",
-              fontSize: 11,
-              fontWeight: 700,
-              color: C.muted,
-              padding: "4px 0",
-              letterSpacing: "0.5px",
-              textTransform: "uppercase",
-            }}>
-              {d}
-            </div>
+            <div key={d} style={{ textAlign: "center", fontSize: 11, fontWeight: 700, color: C.muted, textTransform: "uppercase" }}>{d}</div>
           ))}
         </div>
-
         <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 8 }}>
-          {celulas.map((celula, i) => {
-            const chave = toLocalISO(celula.date);
-            return (
-              <DiaCell
-                key={i}
-                celula={celula}
-                lancamentosDia={lancamentosPorData[chave] || []}
-                dragOverDate={dragOverDate}
-                onDragStart={handleDragStart}
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onDrop={handleDrop}
-                onRemove={handleRemove}
-                deletingId={deletingId}
-                hoje={hoje}
-              />
-            );
-          })}
-        </div>
-
-        <div style={{ display: "flex", gap: 20, marginTop: 16, paddingTop: 14, borderTop: `1px solid ${C.sdark}`, alignItems: "center", flexWrap: "wrap" }}>
-          <span style={{ fontSize: 11, color: C.muted, fontWeight: 600 }}>Legenda:</span>
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <div style={{ width: 12, height: 12, borderRadius: 3, background: `${C.green}25`, borderLeft: `3px solid ${C.green}` }} />
-            <span style={{ fontSize: 11, color: C.muted }}>Receita</span>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <div style={{ width: 12, height: 12, borderRadius: 3, background: `${C.red}25`, borderLeft: `3px solid ${C.red}` }} />
-            <span style={{ fontSize: 11, color: C.muted }}>Despesa</span>
-          </div>
+          {celulas.map((celula, i) => (
+            <DiaCell key={i} celula={celula} lancamentosDia={lancamentosPorData[toLocalISO(celula.date)] || []} dragOverDate={dragOverDate} onDragStart={handleDragStart} onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop} onRemove={handleRemove} deletingId={deletingId} hoje={hoje} />
+          ))}
         </div>
       </div>
     </div>
@@ -687,56 +432,21 @@ export default function DashCalendario({ lancamentos, setLancamentos, user, onTo
 }
 
 function CalendarioHeader({ mes, ano, irMesAnterior, irProximoMes, irHoje, totalReceitaMes, totalDespesaMes, saldoMes, isMobile }) {
-  const saldoPositivo = saldoMes >= 0;
-
   return (
-    <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: 16, alignItems: isMobile ? "stretch" : "center", flexWrap: "wrap" }}>
-      <div className="nc" style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 18px", flex: isMobile ? "none" : "0 0 auto" }}>
-        <button
-          onClick={irMesAnterior}
-          style={{
-            background: "none", border: "none", cursor: "pointer",
-            fontSize: 18, color: C.navy, padding: "4px 8px", borderRadius: 8,
-          }}
-        >
-          ◀
-        </button>
+    <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: 16, alignItems: "center" }}>
+      <div className="nc" style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 18px" }}>
+        <button onClick={irMesAnterior} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 18, color: C.navy }}>◀</button>
         <div style={{ textAlign: "center", minWidth: 140 }}>
-          <div style={{ fontSize: 17, fontWeight: 900, color: C.navy }}>
-            {MESES[mes]}
-          </div>
-          <div style={{ fontSize: 12, color: C.muted, marginTop: 1 }}>{ano}</div>
+          <div style={{ fontSize: 17, fontWeight: 900, color: C.navy }}>{MESES[mes]}</div>
+          <div style={{ fontSize: 12, color: C.muted }}>{ano}</div>
         </div>
-        <button
-          onClick={irProximoMes}
-          style={{
-            background: "none", border: "none", cursor: "pointer",
-            fontSize: 18, color: C.navy, padding: "4px 8px", borderRadius: 8,
-          }}
-        >
-          ▶
-        </button>
-        <button
-          onClick={irHoje}
-          style={{
-            background: C.bg, border: "none", borderRadius: 8,
-            padding: "5px 12px", fontSize: 11, fontWeight: 700, color: C.primary, cursor: "pointer",
-          }}
-        >
-          Hoje
-        </button>
+        <button onClick={irProximoMes} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 18, color: C.navy }}>▶</button>
+        <button onClick={irHoje} style={{ background: C.bg, border: "none", borderRadius: 8, padding: "5px 12px", fontSize: 11, fontWeight: 700, color: C.primary, cursor: "pointer" }}>Hoje</button>
       </div>
-
-      <div style={{ display: "flex", gap: 12, flex: 1, flexWrap: "wrap" }}>
+      <div style={{ display: "flex", gap: 12, flex: 1, width: "100%" }}>
         <TotalCard label="Receitas" valor={totalReceitaMes} cor={C.green} emoji="💵" />
         <TotalCard label="Despesas" valor={totalDespesaMes} cor={C.red} emoji="📤" />
-        <TotalCard
-          label="Saldo do Mês"
-          valor={saldoMes}
-          cor={saldoPositivo ? C.green : C.red}
-          emoji={saldoPositivo ? "✅" : "⚠️"}
-          destaque
-        />
+        <TotalCard label="Saldo" valor={saldoMes} cor={saldoMes >= 0 ? C.green : C.red} emoji="✅" destaque />
       </div>
     </div>
   );
@@ -744,19 +454,9 @@ function CalendarioHeader({ mes, ano, irMesAnterior, irProximoMes, irHoje, total
 
 function TotalCard({ label, valor, cor, emoji, destaque }) {
   return (
-    <div className="nc" style={{
-      flex: 1,
-      minWidth: 120,
-      padding: "12px 16px",
-      borderLeft: `3px solid ${cor}`,
-      background: destaque ? `${cor}08` : undefined,
-    }}>
-      <div style={{ fontSize: 11, color: C.muted, fontWeight: 600, marginBottom: 4 }}>
-        {emoji} {label}
-      </div>
-      <div style={{ fontSize: 16, fontWeight: 900, color: cor }}>
-        R$ {Math.abs(valor).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-      </div>
+    <div className="nc" style={{ flex: 1, minWidth: 100, padding: "12px 16px", borderLeft: `3px solid ${cor}`, background: destaque ? `${cor}08` : undefined }}>
+      <div style={{ fontSize: 11, color: C.muted, fontWeight: 600 }}>{emoji} {label}</div>
+      <div style={{ fontSize: 16, fontWeight: 900, color: cor }}>R$ {Math.abs(valor).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</div>
     </div>
   );
 }
