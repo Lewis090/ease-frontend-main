@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { api } from "../services";
 import { C } from "../styles";
 import { useViewportFlags } from "../hooks";
@@ -45,75 +46,79 @@ export default function DashLancamentos({ lancamentos, setLancamentos, show, set
       onToast?.("Lançamento removido com sucesso.", "success");
     } catch {
       setLancamentos(previous);
-    } finally { // Corrigido de "divide" para "finally" aqui!
+    } finally {
       setDeletingId(null);
     }
   };
 
-  return (
-    <div>
-      {show && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 5000, background: "rgba(20,28,38,0.6)", backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", padding: isMobile ? 12 : 20 }}>
-          <div className="nc" style={{ width: "min(430px, 100%)", maxHeight: "calc(100vh - 24px)", overflowY: "auto", padding: isMobile ? 22 : 38 }}>
-            <h3 style={{ fontSize: isMobile ? 18 : 20, fontWeight: 900, color: C.navy, marginBottom: 24 }}>+ Novo lançamento</h3>
-            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                {[["RECEITA", "💵 Receita"], ["DESPESA_VARIAVEL", "📤 Despesa"]].map(([v, l]) => (
-                  <button
-                    key={v}
-                    onClick={() => setNovo({ ...novo, tipo: v })}
-                    style={{
-                      flex: 1,
-                      padding: "12px 0",
-                      borderRadius: 12,
-                      border: "none",
-                      fontSize: 13,
-                      fontWeight: 700,
-                      cursor: "pointer",
-                      background: novo.tipo === v ? (v === "RECEITA" ? C.green : C.red) : "#E8E4DE",
-                      color: novo.tipo === v ? C.light : C.muted,
-                    }}
-                  >
-                    {l}
-                  </button>
-                ))}
-              </div>
-              <input placeholder="Valor (R$)" type="number" value={novo.valor} onChange={(e) => setNovo({ ...novo, valor: e.target.value })} />
-              <input placeholder="Descrição" value={novo.desc} onChange={(e) => setNovo({ ...novo, desc: e.target.value })} />
-              <input type="date" value={novo.data} onChange={(e) => setNovo({ ...novo, data: e.target.value })} />
-              
-              {novo.tipo === "RECEITA" && (
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8 }}>
-                  {["PIX", "Cartão", "Dinheiro"].map((f) => (
-                    <button
-                      key={f}
-                      onClick={() => setNovo({ ...novo, forma: f })}
-                      style={{
-                        padding: "10px 0",
-                        borderRadius: 10,
-                        border: "none",
-                        fontSize: 12,
-                        fontWeight: 700,
-                        cursor: "pointer",
-                        background: novo.forma === f ? C.primary : "#E8E4DE",
-                        color: novo.forma === f ? C.light : C.muted,
-                      }}
-                    >
-                      {f}
-                    </button>
-                  ))}
-                </div>
-              )}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: 12, marginTop: 6 }}>
-                <button className="btn-n" style={{ padding: "13px 0" }} onClick={() => setShow(false)}>Cancelar</button>
-                <button className="btn-o" style={{ padding: "14px 0" }} onClick={add} disabled={loading}>
-                  {loading ? "Salvando..." : "Salvar lançamento"}
+  // Empacotamos o modal em uma constante para desenhá-lo na raiz da página pelo Portal
+  const modalUI = show ? (
+    <div style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(20,28,38,0.6)", backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", padding: isMobile ? 12 : 20 }}>
+      <div className="nc" style={{ width: "min(430px, 100%)", maxHeight: "calc(100vh - 24px)", overflowY: "auto", padding: isMobile ? 22 : 38 }}>
+        <h3 style={{ fontSize: isMobile ? 18 : 20, fontWeight: 900, color: C.navy, marginBottom: 24 }}>+ Novo lançamento</h3>
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            {[["RECEITA", "💵 Receita"], ["DESPESA_VARIAVEL", "📤 Despesa"]].map(([v, l]) => (
+              <button
+                key={v}
+                onClick={() => setNovo({ ...novo, tipo: v })}
+                style={{
+                  flex: 1,
+                  padding: "12px 0",
+                  borderRadius: 12,
+                  border: "none",
+                  fontSize: 13,
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  background: novo.tipo === v ? (v === "RECEITA" ? C.green : C.red) : "#E8E4DE",
+                  color: novo.tipo === v ? C.light : C.muted,
+                }}
+              >
+                {l}
+              </button>
+            ))}
+          </div>
+          <input placeholder="Valor (R$)" type="number" value={novo.valor} onChange={(e) => setNovo({ ...novo, valor: e.target.value })} />
+          <input placeholder="Descrição" value={novo.desc} onChange={(e) => setNovo({ ...novo, desc: e.target.value })} />
+          <input type="date" value={novo.data} onChange={(e) => setNovo({ ...novo, data: e.target.value })} />
+          
+          {novo.tipo === "RECEITA" && (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8 }}>
+              {["PIX", "Cartão", "Dinheiro"].map((f) => (
+                <button
+                  key={f}
+                  onClick={() => setNovo({ ...novo, forma: f })}
+                  style={{
+                    padding: "10px 0",
+                    borderRadius: 10,
+                    border: "none",
+                    fontSize: 12,
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    background: novo.forma === f ? C.primary : "#E8E4DE",
+                    color: novo.forma === f ? C.light : C.muted,
+                  }}
+                >
+                  {f}
                 </button>
-              </div>
+              ))}
             </div>
+          )}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: 12, marginTop: 6 }}>
+            <button className="btn-n" style={{ padding: "13px 0" }} onClick={() => setShow(false)}>Cancelar</button>
+            <button className="btn-o" style={{ padding: "14px 0" }} onClick={add} disabled={loading}>
+              {loading ? "Salvando..." : "Salvar lançamento"}
+            </button>
           </div>
         </div>
-      )}
+      </div>
+    </div>
+  ) : null;
+
+  return (
+    <div>
+      {/* Garante que o Portal rode em ambientes onde o document está pronto */}
+      {modalUI && typeof document !== "undefined" ? createPortal(modalUI, document.body) : modalUI}
 
       {!apenasModal && (
         <div className="nc" style={{ padding: isMobile ? 16 : 24 }}>

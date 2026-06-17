@@ -240,11 +240,26 @@ export default function DashCalendario({ lancamentos, setLancamentos, user, onTo
   const hoje = toLocalISO(new Date());
   const now = new Date();
 
+  // ====== LÓGICA DE BACKUP PARA GARANTIR QUE ABRA NA HORA ======
+  const [localShow, setLocalShow] = useState(false);
+  // Usa o show global se ele existir, senão usa o estado local para forçar a re-renderização
+  const isModalOpen = typeof show !== "undefined" ? show : localShow;
+
+  const handleOpenModal = () => {
+    if (typeof setShow === "function") setShow(true);
+    setLocalShow(true);
+  };
+
+  const handleCloseModal = (val) => {
+    if (typeof setShow === "function") setShow(val);
+    setLocalShow(val);
+  };
+  // =============================================================
+
   const [mes, setMes] = useState(now.getMonth());
   const [ano, setAno] = useState(now.getFullYear());
   const [dragOverDate, setDragOverDate] = useState(null);
   const [touchDragOverDate, setTouchDragOverDate] = useState(null);
-  const [isTouchDragging, setIsTouchDragging] = useState(false);
   const [touchDraggedItemId, setTouchDraggedItemId] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
   const dragItemRef = useRef(null);
@@ -320,7 +335,6 @@ export default function DashCalendario({ lancamentos, setLancamentos, user, onTo
 
   const handleTouchStart = useCallback((e, lancamento) => {
     dragItemRef.current = lancamento;
-    setIsTouchDragging(true);
     setTouchDraggedItemId(lancamento.id);
   }, []);
 
@@ -337,7 +351,6 @@ export default function DashCalendario({ lancamentos, setLancamentos, user, onTo
   }, []);
 
   const handleTouchEnd = useCallback(() => {
-    setIsTouchDragging(false);
     setTouchDraggedItemId(null);
     setTouchDragOverDate(null);
     const targetDate = touchDragOverDateRef.current;
@@ -375,9 +388,11 @@ export default function DashCalendario({ lancamentos, setLancamentos, user, onTo
   if (isMobile) {
     return (
       <div style={{ display: "flex", flexDirection: "column", gap: 16, position: "relative", paddingBottom: 80 }}>
+        
+        {/* Passa o estado inteligente (local ou global) */}
         <DashLancamentos 
           lancamentos={lancamentos} setLancamentos={setLancamentos} 
-          show={show} setShow={setShow} user={user} onToast={onToast} 
+          show={isModalOpen} setShow={handleCloseModal} user={user} onToast={onToast} 
           apenasModal={true}
         />
 
@@ -415,14 +430,13 @@ export default function DashCalendario({ lancamentos, setLancamentos, user, onTo
           </div>
         </div>
 
-        {setShow && (
-          <button
-            onClick={() => setShow(true)}
-            style={{ position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", width: 56, height: 56, borderRadius: "50%", background: C.primary, color: C.light, border: "none", fontSize: 28, fontWeight: "bold", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0px 6px 16px rgba(20,28,38,0.22)", zIndex: 1000 }}
-          >
-            +
-          </button>
-        )}
+        {/* Botão blindado para sempre funcionar */}
+        <button
+          onClick={handleOpenModal}
+          style={{ position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", width: 56, height: 56, borderRadius: "50%", background: C.primary, color: C.light, border: "none", fontSize: 28, fontWeight: "bold", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0px 6px 16px rgba(20,28,38,0.22)", zIndex: 1000 }}
+        >
+          +
+        </button>
       </div>
     );
   }
@@ -431,7 +445,7 @@ export default function DashCalendario({ lancamentos, setLancamentos, user, onTo
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       <DashLancamentos 
         lancamentos={lancamentos} setLancamentos={setLancamentos} 
-        show={show} setShow={setShow} user={user} onToast={onToast} 
+        show={isModalOpen} setShow={handleCloseModal} user={user} onToast={onToast} 
         apenasModal={true}
       />
 
