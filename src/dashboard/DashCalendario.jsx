@@ -2,6 +2,7 @@ import { useMemo, useState, useRef, useCallback } from "react";
 import { api } from "../services";
 import { C } from "../styles";
 import { useViewportFlags } from "../hooks";
+import DashLancamentos from "./DashLancamentos"; // Certifique-se de que o caminho está correto
 
 const DIAS_SEMANA = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 const MESES = [
@@ -9,7 +10,6 @@ const MESES = [
   "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
 ];
 
-// Formata Date → "YYYY-MM-DD" em fuso local
 function toLocalISO(date) {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, "0");
@@ -17,7 +17,6 @@ function toLocalISO(date) {
   return `${y}-${m}-${d}`;
 }
 
-// Agrupa lançamentos por data (chave "YYYY-MM-DD")
 function agruparPorData(lancamentos) {
   const mapa = {};
   for (const l of lancamentos) {
@@ -29,24 +28,20 @@ function agruparPorData(lancamentos) {
   return mapa;
 }
 
-// Gera todas as células do calendário (inclui dias de meses adjacentes para completar semanas)
 function gerarCelulas(ano, mes) {
   const primeiroDia = new Date(ano, mes, 1);
   const ultimoDia = new Date(ano, mes + 1, 0);
   const celulas = [];
 
-  // Preenche dias anteriores
   for (let i = 0; i < primeiroDia.getDay(); i++) {
     const d = new Date(ano, mes, 1 - (primeiroDia.getDay() - i));
     celulas.push({ date: d, currentMonth: false });
   }
 
-  // Dias do mês atual
   for (let d = 1; d <= ultimoDia.getDate(); d++) {
     celulas.push({ date: new Date(ano, mes, d), currentMonth: true });
   }
 
-  // Preenche dias posteriores para completar a última semana
   const restante = (7 - (celulas.length % 7)) % 7;
   for (let i = 1; i <= restante; i++) {
     celulas.push({ date: new Date(ano, mes + 1, i), currentMonth: false });
@@ -55,7 +50,6 @@ function gerarCelulas(ano, mes) {
   return celulas;
 }
 
-// ── Card de lançamento dentro de cada dia ──
 function LancamentoCard({ lancamento, onDragStart, onRemove, deletingId, onTouchStart, onTouchMove, onTouchEnd, isDragging }) {
   const isReceita = lancamento.tipo === "RECEITA";
   const cor = isReceita ? C.green : C.red;
@@ -65,8 +59,6 @@ function LancamentoCard({ lancamento, onDragStart, onRemove, deletingId, onTouch
     <div
       draggable
       onDragStart={(e) => {
-        // stopPropagation garante que apenas este card inicia o drag,
-        // evitando que o evento borbulhe para cards vizinhos e sobrescreva o dragItemRef
         e.stopPropagation();
         onDragStart(e, lancamento);
       }}
@@ -145,7 +137,6 @@ function LancamentoCard({ lancamento, onDragStart, onRemove, deletingId, onTouch
   );
 }
 
-// ── Célula de um dia no calendário ──
 function DiaCell({ celula, lancamentosDia, dragOverDate, onDragStart, onDragOver, onDragLeave, onDrop, onRemove, deletingId, hoje }) {
   const chave = toLocalISO(celula.date);
   const isHoje = chave === hoje;
@@ -185,7 +176,6 @@ function DiaCell({ celula, lancamentosDia, dragOverDate, onDragStart, onDragOver
         cursor: "default",
       }}
     >
-      {/* Número do dia */}
       <div style={{
         fontSize: 12,
         fontWeight: isHoje ? 900 : 600,
@@ -208,7 +198,6 @@ function DiaCell({ celula, lancamentosDia, dragOverDate, onDragStart, onDragOver
         }}>
           {celula.date.getDate()}
         </span>
-        {/* Mini totais */}
         {lancamentosDia.length > 0 && (
           <div style={{ display: "flex", gap: 3, fontSize: 8, fontWeight: 700 }}>
             {totalReceita > 0 && <span style={{ color: C.green }}>+{totalReceita.toLocaleString("pt-BR", { notation: "compact" })}</span>}
@@ -217,7 +206,6 @@ function DiaCell({ celula, lancamentosDia, dragOverDate, onDragStart, onDragOver
         )}
       </div>
 
-      {/* Cards dos lançamentos */}
       <div>
         {lancamentosDia.slice(0, 3).map((l) => (
           <LancamentoCard
@@ -235,7 +223,6 @@ function DiaCell({ celula, lancamentosDia, dragOverDate, onDragStart, onDragOver
         )}
       </div>
 
-      {/* Indicador visual de drop */}
       {isDragOver && (
         <div style={{
           position: "absolute",
@@ -253,8 +240,7 @@ function DiaCell({ celula, lancamentosDia, dragOverDate, onDragStart, onDragOver
   );
 }
 
-// ── Componente principal ──
-export default function DashCalendario({ lancamentos, setLancamentos, user, onToast, setShow }) {
+export default function DashCalendario({ lancamentos, setLancamentos, user, onToast, show, setShow }) {
   const { isMobile } = useViewportFlags();
   const hoje = toLocalISO(new Date());
   const now = new Date();
@@ -269,13 +255,9 @@ export default function DashCalendario({ lancamentos, setLancamentos, user, onTo
   const dragItemRef = useRef(null);
   const touchDragOverDateRef = useRef(null);
 
-  // Agrupa lançamentos por data
   const lancamentosPorData = useMemo(() => agruparPorData(lancamentos), [lancamentos]);
-
-  // Células do calendário (grid completo)
   const celulas = useMemo(() => gerarCelulas(ano, mes), [ano, mes]);
 
-  // Dias do mês atual para a linha do tempo mobile
   const diasDoMes = useMemo(() => {
     const totalDias = new Date(ano, mes + 1, 0).getDate();
     const lista = [];
@@ -285,7 +267,6 @@ export default function DashCalendario({ lancamentos, setLancamentos, user, onTo
     return lista;
   }, [ano, mes]);
 
-  // Navegação de mês
   const irMesAnterior = () => {
     if (mes === 0) { setMes(11); setAno(a => a - 1); }
     else setMes(m => m - 1);
@@ -296,7 +277,6 @@ export default function DashCalendario({ lancamentos, setLancamentos, user, onTo
   };
   const irHoje = () => { setMes(now.getMonth()); setAno(now.getFullYear()); };
 
-  // ── Drag handlers (Desktop) ──
   const handleDragStart = useCallback((e, lancamento) => {
     dragItemRef.current = lancamento;
     e.dataTransfer.effectAllowed = "move";
@@ -323,7 +303,6 @@ export default function DashCalendario({ lancamentos, setLancamentos, user, onTo
     setDragOverDate(null);
     setTouchDragOverDate(null);
 
-    // Resolve o item pelo ID gravado no dataTransfer (fonte de verdade)
     const idTransfer = e?.dataTransfer?.getData("text/plain");
     const item = idTransfer
       ? lancamentos.find(l => String(l.id) === idTransfer) ?? dragItemRef.current
@@ -332,9 +311,8 @@ export default function DashCalendario({ lancamentos, setLancamentos, user, onTo
     if (!item) return;
 
     const dataOrigem = (item.data || "").split("T")[0];
-    if (dataOrigem === dataAlvo) return; // mesma data, nada a fazer
+    if (dataOrigem === dataAlvo) return;
 
-    // Atualização otimista: troca a data localmente enquanto a API processa
     const anterior = lancamentos;
     setLancamentos(prev =>
       prev.map(l => l.id === item.id ? { ...l, data: dataAlvo } : l)
@@ -385,7 +363,6 @@ export default function DashCalendario({ lancamentos, setLancamentos, user, onTo
     }
   }, [lancamentos, setLancamentos, user, onToast]);
 
-  // ── Touch Drag Handlers (Mobile) ──
   const handleTouchStart = useCallback((e, lancamento) => {
     dragItemRef.current = lancamento;
     setIsTouchDragging(true);
@@ -418,7 +395,6 @@ export default function DashCalendario({ lancamentos, setLancamentos, user, onTo
     }
   }, [handleDrop]);
 
-  // Remover lançamento
   const handleRemove = useCallback(async (item) => {
     const id = item?.id;
     if (!id) return;
@@ -455,7 +431,6 @@ export default function DashCalendario({ lancamentos, setLancamentos, user, onTo
     }
   }, [lancamentos, setLancamentos, user, onToast]);
 
-  // ── Totais do mês ──
   const lancamentosDoMes = useMemo(() => {
     return lancamentos.filter(l => {
       const d = (l.data || "").split("T")[0];
@@ -468,10 +443,20 @@ export default function DashCalendario({ lancamentos, setLancamentos, user, onTo
   const totalDespesaMes = lancamentosDoMes.filter(l => l.tipo !== "RECEITA").reduce((s, l) => s + Number(l.valor), 0);
   const saldoMes = totalReceitaMes - totalDespesaMes;
 
-  // ── Vista mobile: linha do tempo do calendário ──
   if (isMobile) {
     return (
       <div style={{ display: "flex", flexDirection: "column", gap: 16, position: "relative", paddingBottom: 80 }}>
+        {/* Renderização condicional do modal de inserção sem duplicar a lista no mobile */}
+        <DashLancamentos 
+          lancamentos={lancamentos} 
+          setLancamentos={setLancamentos} 
+          show={show} 
+          setShow={setShow} 
+          user={user} 
+          onToast={onToast} 
+          apenasModal={true}
+        />
+
         {/* Header */}
         <CalendarioHeader
           mes={mes} ano={ano}
@@ -482,10 +467,9 @@ export default function DashCalendario({ lancamentos, setLancamentos, user, onTo
 
         {/* Linha do Tempo (Timeline) */}
         <div className="nc" style={{ padding: "20px 14px", position: "relative" }}>
-          {/* Linha vertical da timeline */}
           <div style={{
             position: "absolute",
-            left: 62, // centralizado sob a coluna de timeline
+            left: 62,
             top: 24,
             bottom: 24,
             width: 2,
@@ -518,7 +502,6 @@ export default function DashCalendario({ lancamentos, setLancamentos, user, onTo
                     minHeight: items.length > 0 ? 75 : 48,
                   }}
                 >
-                  {/* Coluna da Esquerda: Data */}
                   <div style={{
                     width: 40,
                     textAlign: "right",
@@ -547,7 +530,6 @@ export default function DashCalendario({ lancamentos, setLancamentos, user, onTo
                     </span>
                   </div>
 
-                  {/* Coluna do Meio: Nó da Timeline */}
                   <div style={{
                     width: 14,
                     display: "flex",
@@ -568,7 +550,6 @@ export default function DashCalendario({ lancamentos, setLancamentos, user, onTo
                     }} />
                   </div>
 
-                  {/* Coluna da Direita: Lançamentos */}
                   <div style={{
                     flex: 1,
                     paddingLeft: 12,
@@ -645,19 +626,15 @@ export default function DashCalendario({ lancamentos, setLancamentos, user, onTo
     );
   }
 
-  // ── Vista desktop: grid calendário ──
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-      {/* Header */}
       <CalendarioHeader
         mes={mes} ano={ano}
         irMesAnterior={irMesAnterior} irProximoMes={irProximoMes} irHoje={irHoje}
         totalReceitaMes={totalReceitaMes} totalDespesaMes={totalDespesaMes} saldoMes={saldoMes}
       />
 
-      {/* Grid */}
       <div className="nc" style={{ padding: 20 }}>
-        {/* Cabeçalho dos dias da semana */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 8, marginBottom: 8 }}>
           {DIAS_SEMANA.map(d => (
             <div key={d} style={{
@@ -674,7 +651,6 @@ export default function DashCalendario({ lancamentos, setLancamentos, user, onTo
           ))}
         </div>
 
-        {/* Células dos dias */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 8 }}>
           {celulas.map((celula, i) => {
             const chave = toLocalISO(celula.date);
@@ -696,7 +672,6 @@ export default function DashCalendario({ lancamentos, setLancamentos, user, onTo
           })}
         </div>
 
-        {/* Legenda */}
         <div style={{ display: "flex", gap: 20, marginTop: 16, paddingTop: 14, borderTop: `1px solid ${C.sdark}`, alignItems: "center", flexWrap: "wrap" }}>
           <span style={{ fontSize: 11, color: C.muted, fontWeight: 600 }}>Legenda:</span>
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -716,13 +691,11 @@ export default function DashCalendario({ lancamentos, setLancamentos, user, onTo
   );
 }
 
-// ── Sub-componente: Header do calendário ──
 function CalendarioHeader({ mes, ano, irMesAnterior, irProximoMes, irHoje, totalReceitaMes, totalDespesaMes, saldoMes, isMobile }) {
   const saldoPositivo = saldoMes >= 0;
 
   return (
     <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: 16, alignItems: isMobile ? "stretch" : "center", flexWrap: "wrap" }}>
-      {/* Navegação do mês */}
       <div className="nc" style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 18px", flex: isMobile ? "none" : "0 0 auto" }}>
         <button
           onClick={irMesAnterior}
@@ -776,7 +749,6 @@ function CalendarioHeader({ mes, ano, irMesAnterior, irProximoMes, irHoje, total
         </button>
       </div>
 
-      {/* Cards de totais do mês */}
       <div style={{ display: "flex", gap: 12, flex: 1, flexWrap: "wrap" }}>
         <TotalCard label="Receitas" valor={totalReceitaMes} cor={C.green} emoji="💵" />
         <TotalCard label="Despesas" valor={totalDespesaMes} cor={C.red} emoji="📤" />
