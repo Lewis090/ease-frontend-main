@@ -15,7 +15,7 @@ function isLoggedIn() {
 
 export default function Nav({ page, setPage, darkMode, onLogout }) {
   const [sc, setSc] = useState(false);
-  const [loggedIn, setLoggedIn] = useState(isLoggedIn);
+  const loggedIn = isLoggedIn();
   const { isMobile } = useViewportFlags();
 
   useEffect(() => {
@@ -23,11 +23,6 @@ export default function Nav({ page, setPage, darkMode, onLogout }) {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
-
-  // Atualiza o estado de login sempre que a página mudar
-  useEffect(() => {
-    setLoggedIn(isLoggedIn());
-  }, [page]);
 
   const dark = darkMode && !sc;
 

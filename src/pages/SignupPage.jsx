@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Logo } from "../components";
-import { useViewportFlags } from "../hooks";
 import { api } from "../services";
 
 function normalizeAuthUser(res, typedName) {
@@ -31,7 +30,6 @@ export default function SignupPage({ setPage, onToast }) {
   const [f, setF] = useState({ nome: "", email: "", cnpj: "", empresa: "", senha: "" });
   const [aceitou, setAceitou] = useState(false);
   const [erroTermos, setErroTermos] = useState(false);
-  const { isMobile } = useViewportFlags();
   const [loading, setLoading] = useState(false);
 
   const finalizarCadastro = async () => {
