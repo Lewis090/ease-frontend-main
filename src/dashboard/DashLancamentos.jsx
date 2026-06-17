@@ -3,7 +3,7 @@ import { api } from "../services";
 import { C } from "../styles";
 import { useViewportFlags } from "../hooks";
 
-export default function DashLancamentos({ lancamentos, setLancamentos, show, setShow, user, onToast }) {
+export default function DashLancamentos({ lancamentos, setLancamentos, show, setShow, user, onToast, apenasModal = false }) {
   const { isMobile } = useViewportFlags();
   const [novo, setNovo] = useState({ tipo: "RECEITA", valor: "", desc: "", data: new Date().toISOString().split("T")[0] });
   const [loading, setLoading] = useState(false);
@@ -24,7 +24,7 @@ export default function DashLancamentos({ lancamentos, setLancamentos, show, set
         setLancamentos([{ ...res, tipo: novo.tipo }, ...lancamentos]);
         setShow(false);
         setNovo({ tipo: "RECEITA", valor: "", desc: "", data: new Date().toISOString().split("T")[0] });
-        onToast?.("Lançamento salvo com sucesso.", "success");
+        onToast?.("Lançamento saved successfully.", "success");
       }
     } catch {
       onToast?.("Erro ao salvar transação", "error");
@@ -59,7 +59,7 @@ export default function DashLancamentos({ lancamentos, setLancamentos, show, set
           deleted = true;
           break;
         } catch {
-          // Tenta o próximo endpoint conhecido para manter compatibilidade.
+          // Tenta o próximo endpoint
         }
       }
 
@@ -143,37 +143,41 @@ export default function DashLancamentos({ lancamentos, setLancamentos, show, set
           </div>
         </div>
       )}
-      <div className="nc" style={{ padding: isMobile ? 16 : 24 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: isMobile ? "flex-start" : "center", gap: 12, flexWrap: "wrap", marginBottom: 20 }}>
-          <span style={{ fontSize: 13, color: C.muted }}>{lancamentos.length} lançamentos registrados</span>
-        </div>
-        {lancamentos.map((l, i) => (
-          <div key={l.id} style={{ display: "flex", justifyContent: "space-between", alignItems: isMobile ? "flex-start" : "center", flexDirection: isMobile ? "column" : "row", gap: isMobile ? 10 : 0, padding: "14px 0", borderBottom: i < lancamentos.length - 1 ? `1px solid rgba(45,58,73,0.07)` : "none" }}>
-            <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
-              <div style={{ width: 40, height: 40, borderRadius: 12, background: l.tipo === "RECEITA" ? `${C.green}15` : `${C.red}15`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17 }}>
-                {l.tipo === "RECEITA" ? "💵" : "📤"}
-              </div>
-              <div>
-                <div style={{ fontSize: 14, fontWeight: 600, color: C.navy }}>{l.descricao}</div>
-                <div style={{ fontSize: 11, color: C.muted, marginTop: 2 }}>{l.data}</div>
-              </div>
-            </div>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: isMobile ? "100%" : "auto", paddingLeft: isMobile ? 54 : 0, gap: 12 }}>
-              <div style={{ fontSize: 15, fontWeight: 900, color: l.tipo === "RECEITA" ? C.green : C.red }}>
-                {l.tipo === "RECEITA" ? "+" : "-"} R$ {Number(l.valor).toLocaleString("pt-BR")}
-              </div>
-              <button
-                className="btn-g"
-                style={{ color: C.red, padding: "6px 10px", fontSize: 12, fontWeight: 700 }}
-                disabled={deletingId === l.id}
-                onClick={() => remove(l)}
-              >
-                {deletingId === l.id ? "Removendo..." : "Remover"}
-              </button>
-            </div>
+
+      {/* Exibe a listagem apenas se o componente não for invocado em modo "apenas modal" */}
+      {!apenasModal && (
+        <div className="nc" style={{ padding: isMobile ? 16 : 24 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: isMobile ? "flex-start" : "center", gap: 12, flexWrap: "wrap", marginBottom: 20 }}>
+            <span style={{ fontSize: 13, color: C.muted }}>{lancamentos.length} lançamentos registrados</span>
           </div>
-        ))}
-      </div>
+          {lancamentos.map((l, i) => (
+            <div key={l.id} style={{ display: "flex", justifyContent: "space-between", alignItems: isMobile ? "flex-start" : "center", flexDirection: isMobile ? "column" : "row", gap: isMobile ? 10 : 0, padding: "14px 0", borderBottom: i < lancamentos.length - 1 ? `1px solid rgba(45,58,73,0.07)` : "none" }}>
+              <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
+                <div style={{ width: 40, height: 40, borderRadius: 12, background: l.tipo === "RECEITA" ? `${C.green}15` : `${C.red}15`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17 }}>
+                  {l.tipo === "RECEITA" ? "💵" : "📤"}
+                </div>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: C.navy }}>{l.descricao}</div>
+                  <div style={{ fontSize: 11, color: C.muted, marginTop: 2 }}>{l.data}</div>
+                </div>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: isMobile ? "100%" : "auto", paddingLeft: isMobile ? 54 : 0, gap: 12 }}>
+                <div style={{ fontSize: 15, fontWeight: 900, color: l.tipo === "RECEITA" ? C.green : C.red }}>
+                  {l.tipo === "RECEITA" ? "+" : "-"} R$ {Number(l.valor).toLocaleString("pt-BR")}
+                </div>
+                <button
+                  className="btn-g"
+                  style={{ color: C.red, padding: "6px 10px", fontSize: 12, fontWeight: 700 }}
+                  disabled={deletingId === l.id}
+                  onClick={() => remove(l)}
+                >
+                  {deletingId === l.id ? "Removendo..." : "Remover"}
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
