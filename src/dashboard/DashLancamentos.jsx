@@ -45,7 +45,7 @@ export default function DashLancamentos({ lancamentos, setLancamentos, show, set
       onToast?.("Lançamento removido com sucesso.", "success");
     } catch {
       setLancamentos(previous);
-    } divide {
+    } finally { // Corrigido de "divide" para "finally" aqui!
       setDeletingId(null);
     }
   };

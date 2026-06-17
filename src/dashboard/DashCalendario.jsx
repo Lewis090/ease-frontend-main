@@ -205,6 +205,36 @@ function DiaCell({ celula, lancamentosDia, dragOverDate, onDragStart, onDragOver
   );
 }
 
+function TotalCard({ label, valor, cor, emoji, destaque }) {
+  return (
+    <div className="nc" style={{ flex: 1, minWidth: 100, padding: "12px 16px", borderLeft: `3px solid ${cor}`, background: destaque ? `${cor}08` : undefined }}>
+      <div style={{ fontSize: 11, color: C.muted, fontWeight: 600 }}>{emoji} {label}</div>
+      <div style={{ fontSize: 16, fontWeight: 900, color: cor }}>R$ {Math.abs(valor).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</div>
+    </div>
+  );
+}
+
+function CalendarioHeader({ mes, ano, irMesAnterior, irProximoMes, irHoje, totalReceitaMes, totalDespesaMes, saldoMes, isMobile }) {
+  return (
+    <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: 16, alignItems: "center" }}>
+      <div className="nc" style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 18px" }}>
+        <button onClick={irMesAnterior} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 18, color: C.navy }}>◀</button>
+        <div style={{ textAlign: "center", minWidth: 140 }}>
+          <div style={{ fontSize: 17, fontWeight: 900, color: C.navy }}>{MESES[mes]}</div>
+          <div style={{ fontSize: 12, color: C.muted }}>{ano}</div>
+        </div>
+        <button onClick={irProximoMes} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 18, color: C.navy }}>▶</button>
+        <button onClick={irHoje} style={{ background: C.bg, border: "none", borderRadius: 8, padding: "5px 12px", fontSize: 11, fontWeight: 700, color: C.primary, cursor: "pointer" }}>Hoje</button>
+      </div>
+      <div style={{ display: "flex", gap: 12, flex: 1, width: "100%" }}>
+        <TotalCard label="Receitas" valor={totalReceitaMes} cor={C.green} emoji="💵" />
+        <TotalCard label="Despesas" valor={totalDespesaMes} cor={C.red} emoji="📤" />
+        <TotalCard label="Saldo" valor={saldoMes} cor={saldoMes >= 0 ? C.green : C.red} emoji="✅" destaque />
+      </div>
+    </div>
+  );
+}
+
 export default function DashCalendario({ lancamentos, setLancamentos, user, onToast, show, setShow }) {
   const { isMobile } = useViewportFlags();
   const hoje = toLocalISO(new Date());
@@ -422,36 +452,6 @@ export default function DashCalendario({ lancamentos, setLancamentos, user, onTo
           ))}
         </div>
       </div>
-    </div>
-  );
-}
-
-function CalendarioHeader({ mes, ano, irMesAnterior, irProximoMes, irHoje, totalReceitaMes, totalDespesaMes, saldoMes, isMobile }) {
-  return (
-    <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: 16, alignItems: "center" }}>
-      <div className="nc" style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 18px" }}>
-        <button onClick={irMesAnterior} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 18, color: C.navy }}>◀</button>
-        <div style={{ textAlign: "center", minWidth: 140 }}>
-          <div style={{ fontSize: 17, fontWeight: 900, color: C.navy }}>{MESES[mes]}</div>
-          <div style={{ fontSize: 12, color: C.muted }}>{ano}</div>
-        </div>
-        <button onClick={irProximoMes} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 18, color: C.navy }}>▶</button>
-        <button onClick={irHoje} style={{ background: C.bg, border: "none", borderRadius: 8, padding: "5px 12px", fontSize: 11, fontWeight: 700, color: C.primary, cursor: "pointer" }}>Hoje</button>
-      </div>
-      <div style={{ display: "flex", gap: 12, flex: 1, width: "100%" }}>
-        <TotalCard label="Receitas" valor={totalReceitaMes} cor={C.green} emoji="💵" />
-        <TotalCard label="Despesas" valor={totalDespesaMes} cor={C.red} emoji="📤" />
-        <TotalCard label="Saldo" valor={saldoMes} cor={saldoMes >= 0 ? C.green : C.red} emoji="✅" destaque />
-      </div>
-    </div>
-  );
-}
-
-function TotalCard({ label, valor, cor, emoji, destaque }) {
-  return (
-    <div className="nc" style={{ flex: 1, minWidth: 100, padding: "12px 16px", borderLeft: `3px solid ${cor}`, background: destaque ? `${cor}08` : undefined }}>
-      <div style={{ fontSize: 11, color: C.muted, fontWeight: 600 }}>{emoji} {label}</div>
-      <div style={{ fontSize: 16, fontWeight: 900, color: cor }}>R$ {Math.abs(valor).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</div>
     </div>
   );
 }
