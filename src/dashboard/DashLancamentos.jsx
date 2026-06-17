@@ -146,7 +146,6 @@ export default function DashLancamentos({ lancamentos, setLancamentos, show, set
       <div className="nc" style={{ padding: isMobile ? 16 : 24 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: isMobile ? "flex-start" : "center", gap: 12, flexWrap: "wrap", marginBottom: 20 }}>
           <span style={{ fontSize: 13, color: C.muted }}>{lancamentos.length} lançamentos registrados</span>
-          <button className="btn-o" style={{ padding: "10px 20px", fontSize: 13 }} onClick={() => setShow(true)}>+ Adicionar</button>
         </div>
         {lancamentos.map((l, i) => (
           <div key={l.id} style={{ display: "flex", justifyContent: "space-between", alignItems: isMobile ? "flex-start" : "center", flexDirection: isMobile ? "column" : "row", gap: isMobile ? 10 : 0, padding: "14px 0", borderBottom: i < lancamentos.length - 1 ? `1px solid rgba(45,58,73,0.07)` : "none" }}>
