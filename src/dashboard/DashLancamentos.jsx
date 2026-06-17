@@ -21,7 +21,7 @@ export default function DashLancamentos({ lancamentos, setLancamentos, show, set
       };
       const res = await api.post(`/transacoes?userId=${user.id}`, payload);
       if (res.id) {
-        setLancamentos([res, ...lancamentos]);
+        setLancamentos([{ ...res, tipo: novo.tipo }, ...lancamentos]);
         setShow(false);
         setNovo({ tipo: "RECEITA", valor: "", desc: "", data: new Date().toISOString().split("T")[0] });
         onToast?.("Lançamento salvo com sucesso.", "success");

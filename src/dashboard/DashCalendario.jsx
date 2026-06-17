@@ -355,7 +355,7 @@ export default function DashCalendario({ lancamentos, setLancamentos, user, onTo
       // Substitui o item antigo (id mudou) pelo novo retornado pela API
       if (novoItem?.id) {
         setLancamentos(prev =>
-          prev.map(l => l.id === item.id ? { ...novoItem, data: dataAlvo } : l)
+          prev.map(l => l.id === item.id ? { ...novoItem, tipo: item.tipo, data: dataAlvo } : l)
         );
       }
 
