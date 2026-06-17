@@ -267,7 +267,6 @@ export default function DashCalendario({ lancamentos, setLancamentos, user, onTo
   const [touchDraggedItemId, setTouchDraggedItemId] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
   const dragItemRef = useRef(null);
-  const touchDragOverDateRef = useRef(null);
 
   // Agrupa lançamentos por data
   const lancamentosPorData = useMemo(() => agruparPorData(lancamentos), [lancamentos]);
@@ -399,10 +398,8 @@ export default function DashCalendario({ lancamentos, setLancamentos, user, onTo
     const dayElem = elem?.closest("[data-date]");
     if (dayElem) {
       const targetDate = dayElem.getAttribute("data-date");
-      touchDragOverDateRef.current = targetDate;
       setTouchDragOverDate(targetDate);
     } else {
-      touchDragOverDateRef.current = null;
       setTouchDragOverDate(null);
     }
   }, []);
@@ -410,12 +407,12 @@ export default function DashCalendario({ lancamentos, setLancamentos, user, onTo
   const handleTouchEnd = useCallback((e) => {
     setIsTouchDragging(false);
     setTouchDraggedItemId(null);
-    setTouchDragOverDate(null);
-    const targetDate = touchDragOverDateRef.current;
-    touchDragOverDateRef.current = null;
-    if (targetDate && dragItemRef.current) {
-      handleDrop(null, targetDate);
-    }
+    setTouchDragOverDate(currentDate => {
+      if (currentDate && dragItemRef.current) {
+        handleDrop(null, currentDate);
+      }
+      return null;
+    });
   }, [handleDrop]);
 
   // Remover lançamento
@@ -613,7 +610,6 @@ export default function DashCalendario({ lancamentos, setLancamentos, user, onTo
         {setShow && (
           <button
             onClick={() => setShow(true)}
-            onTouchEnd={(e) => { e.preventDefault(); setShow(true); }}
             style={{
               position: "fixed",
               bottom: 24,
@@ -633,10 +629,11 @@ export default function DashCalendario({ lancamentos, setLancamentos, user, onTo
               boxShadow: "0px 6px 16px rgba(20,28,38,0.22)",
               cursor: "pointer",
               zIndex: 1000,
-              transition: "box-shadow 0.15s, background-color 0.15s",
+              transition: "transform 0.15s, background-color 0.15s",
+              touchAction: "none"
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.boxShadow = "0px 8px 20px rgba(20,28,38,0.35)")}
-            onMouseLeave={(e) => (e.currentTarget.style.boxShadow = "0px 6px 16px rgba(20,28,38,0.22)")}
+            onMouseEnter={(e) => e.currentTarget.style.transform = "translateX(-50%) scale(1.05)"}
+            onMouseLeave={(e) => e.currentTarget.style.transform = "translateX(-50%)"}
           >
             +
           </button>
