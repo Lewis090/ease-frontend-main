@@ -2,7 +2,7 @@ import { useMemo, useState, useRef, useCallback } from "react";
 import { api } from "../services";
 import { C } from "../styles";
 import { useViewportFlags } from "../hooks";
-import DashLancamentos from "./DashLancamentos"; // Certifique-se de que o caminho está correto
+import DashLancamentos from "./DashLancamentos";
 
 const DIAS_SEMANA = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 const MESES = [
@@ -446,7 +446,8 @@ export default function DashCalendario({ lancamentos, setLancamentos, user, onTo
   if (isMobile) {
     return (
       <div style={{ display: "flex", flexDirection: "column", gap: 16, position: "relative", paddingBottom: 80 }}>
-        {/* Modal injetado de forma limpa para rodar no mobile sem duplicar listas */}
+        
+        {/* O MODAL AGORA ESTÁ INJETADO AQUI DENTRO DO CALENDÁRIO MOBILE */}
         <DashLancamentos 
           lancamentos={lancamentos} 
           setLancamentos={setLancamentos} 
@@ -590,7 +591,7 @@ export default function DashCalendario({ lancamentos, setLancamentos, user, onTo
           </div>
         </div>
 
-        {/* Botão de Ação Flutuante (FAB) corrigido para Mobile */}
+        {/* Botão de Ação Flutuante (FAB) limpo sem conflito de toques */}
         {setShow && (
           <button
             onClick={() => setShow(true)}
@@ -615,8 +616,6 @@ export default function DashCalendario({ lancamentos, setLancamentos, user, onTo
               zIndex: 1000,
               transition: "box-shadow 0.15s, background-color 0.15s",
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.boxShadow = "0px 8px 20px rgba(20,28,38,0.35)")}
-            onMouseLeave={(e) => (e.currentTarget.style.boxShadow = "0px 6px 16px rgba(20,28,38,0.22)")}
           >
             +
           </button>
@@ -681,9 +680,6 @@ export default function DashCalendario({ lancamentos, setLancamentos, user, onTo
             <div style={{ width: 12, height: 12, borderRadius: 3, background: `${C.red}25`, borderLeft: `3px solid ${C.red}` }} />
             <span style={{ fontSize: 11, color: C.muted }}>Despesa</span>
           </div>
-          <span style={{ fontSize: 11, color: C.muted, marginLeft: "auto" }}>
-            💡 Arraste um lançamento para outro dia para alterar a data
-          </span>
         </div>
       </div>
     </div>
@@ -701,11 +697,7 @@ function CalendarioHeader({ mes, ano, irMesAnterior, irProximoMes, irHoje, total
           style={{
             background: "none", border: "none", cursor: "pointer",
             fontSize: 18, color: C.navy, padding: "4px 8px", borderRadius: 8,
-            transition: "background .15s",
           }}
-          onMouseEnter={e => e.currentTarget.style.background = `${C.sdark}`}
-          onMouseLeave={e => e.currentTarget.style.background = "none"}
-          title="Mês anterior"
         >
           ◀
         </button>
@@ -720,28 +712,15 @@ function CalendarioHeader({ mes, ano, irMesAnterior, irProximoMes, irHoje, total
           style={{
             background: "none", border: "none", cursor: "pointer",
             fontSize: 18, color: C.navy, padding: "4px 8px", borderRadius: 8,
-            transition: "background .15s",
           }}
-          onMouseEnter={e => e.currentTarget.style.background = `${C.sdark}`}
-          onMouseLeave={e => e.currentTarget.style.background = "none"}
-          title="Próximo mês"
         >
           ▶
         </button>
         <button
           onClick={irHoje}
           style={{
-            background: C.bg,
-            border: "none",
-            borderRadius: 8,
-            padding: "5px 12px",
-            fontSize: 11,
-            fontWeight: 700,
-            color: C.primary,
-            cursor: "pointer",
-            fontFamily: "Inter",
-            boxShadow: `2px 2px 6px ${C.sdark}, -2px -2px 6px rgba(255,255,255,0.8)`,
-            transition: "all .15s",
+            background: C.bg, border: "none", borderRadius: 8,
+            padding: "5px 12px", fontSize: 11, fontWeight: 700, color: C.primary, cursor: "pointer",
           }}
         >
           Hoje
