@@ -263,7 +263,7 @@ export default function DashCalendario({ lancamentos, setLancamentos, user, onTo
   const [ano, setAno] = useState(now.getFullYear());
   const [dragOverDate, setDragOverDate] = useState(null);
   const [touchDragOverDate, setTouchDragOverDate] = useState(null);
-  const [isTouchDragging, setIsTouchDragging] = useState(false);
+  const [, setIsTouchDragging] = useState(false);
   const [touchDraggedItemId, setTouchDraggedItemId] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
   const dragItemRef = useRef(null);
@@ -407,7 +407,7 @@ export default function DashCalendario({ lancamentos, setLancamentos, user, onTo
     }
   }, []);
 
-  const handleTouchEnd = useCallback((e) => {
+  const handleTouchEnd = useCallback(() => {
     setIsTouchDragging(false);
     setTouchDraggedItemId(null);
     setTouchDragOverDate(null);
