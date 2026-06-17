@@ -2,7 +2,7 @@ import { useMemo, useState, useRef, useCallback } from "react";
 import { api } from "../services";
 import { C } from "../styles";
 import { useViewportFlags } from "../hooks";
-import DashLancamentos from "./DashLancamentos"; // Importação essencial para carregar o modal aqui
+import DashLancamentos from "./DashLancamentos";
 
 const DIAS_SEMANA = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 const MESES = [
@@ -342,12 +342,9 @@ export default function DashCalendario({ lancamentos, setLancamentos, user, onTo
   const totalDespesaMes = lancamentosDoMes.filter(l => l.tipo !== "RECEITA").reduce((s, l) => s + Number(l.valor), 0);
   const saldoMes = totalReceitaMes - totalDespesaMes;
 
-  // ── RENDERIZAÇÃO MOBILE ──
   if (isMobile) {
     return (
       <div style={{ display: "flex", flexDirection: "column", gap: 16, position: "relative", paddingBottom: 80 }}>
-        
-        {/* INJETADO O FORMULÁRIO PURAMENTE COMO MODAL AQUI DENTRO */}
         <DashLancamentos 
           lancamentos={lancamentos} setLancamentos={setLancamentos} 
           show={show} setShow={setShow} user={user} onToast={onToast} 
@@ -400,10 +397,8 @@ export default function DashCalendario({ lancamentos, setLancamentos, user, onTo
     );
   }
 
-  // ── RENDERIZAÇÃO DESKTOP ──
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-      {/* SE O USUÁRIO CLICAR NO DESKTOP TAMBÉM ABRE O MODAL SEM ERROS */}
       <DashLancamentos 
         lancamentos={lancamentos} setLancamentos={setLancamentos} 
         show={show} setShow={setShow} user={user} onToast={onToast} 

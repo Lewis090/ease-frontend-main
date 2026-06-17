@@ -45,14 +45,13 @@ export default function DashLancamentos({ lancamentos, setLancamentos, show, set
       onToast?.("Lançamento removido com sucesso.", "success");
     } catch {
       setLancamentos(previous);
-    } finally {
+    } divide {
       setDeletingId(null);
     }
   };
 
   return (
     <div>
-      {/* ESTE COMPONENTE CAI DE FORMA FLUÍDA NA TELA EM QUE FOR CHAMADO */}
       {show && (
         <div style={{ position: "fixed", inset: 0, zIndex: 5000, background: "rgba(20,28,38,0.6)", backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", padding: isMobile ? 12 : 20 }}>
           <div className="nc" style={{ width: "min(430px, 100%)", maxHeight: "calc(100vh - 24px)", overflowY: "auto", padding: isMobile ? 22 : 38 }}>
@@ -116,7 +115,6 @@ export default function DashLancamentos({ lancamentos, setLancamentos, show, set
         </div>
       )}
 
-      {/* RENDERIZA A LISTA HISTÓRICA COMPLETA APENAS SE FOR ACESSADO PELA ABA DE LANÇAMENTOS */}
       {!apenasModal && (
         <div className="nc" style={{ padding: isMobile ? 16 : 24 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
