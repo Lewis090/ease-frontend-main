@@ -446,7 +446,7 @@ export default function DashCalendario({ lancamentos, setLancamentos, user, onTo
   if (isMobile) {
     return (
       <div style={{ display: "flex", flexDirection: "column", gap: 16, position: "relative", paddingBottom: 80 }}>
-        {/* Renderização condicional do modal de inserção sem duplicar a lista no mobile */}
+        {/* Modal injetado de forma limpa para rodar no mobile sem duplicar listas */}
         <DashLancamentos 
           lancamentos={lancamentos} 
           setLancamentos={setLancamentos} 
@@ -590,11 +590,10 @@ export default function DashCalendario({ lancamentos, setLancamentos, user, onTo
           </div>
         </div>
 
-        {/* Botão de Ação Flutuante (FAB) */}
+        {/* Botão de Ação Flutuante (FAB) corrigido para Mobile */}
         {setShow && (
           <button
             onClick={() => setShow(true)}
-            onTouchEnd={(e) => { e.preventDefault(); setShow(true); }}
             style={{
               position: "fixed",
               bottom: 24,

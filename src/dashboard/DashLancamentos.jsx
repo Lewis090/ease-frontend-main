@@ -14,7 +14,7 @@ export default function DashLancamentos({ lancamentos, setLancamentos, show, set
     setLoading(true);
     try {
       const payload = {
-        descricao: novo.desc,
+        descricao: !novo.desc,
         tipo: novo.tipo,
         valor: novo.valor,
         data: novo.data,
@@ -24,7 +24,7 @@ export default function DashLancamentos({ lancamentos, setLancamentos, show, set
         setLancamentos([{ ...res, tipo: novo.tipo }, ...lancamentos]);
         setShow(false);
         setNovo({ tipo: "RECEITA", valor: "", desc: "", data: new Date().toISOString().split("T")[0] });
-        onToast?.("Lançamento saved successfully.", "success");
+        onToast?.("Lançamento salvo com sucesso.", "success");
       }
     } catch {
       onToast?.("Erro ao salvar transação", "error");
@@ -144,7 +144,7 @@ export default function DashLancamentos({ lancamentos, setLancamentos, show, set
         </div>
       )}
 
-      {/* Exibe a listagem apenas se o componente não for invocado em modo "apenas modal" */}
+      {/* Renderiza a lista padrão apenas quando NÃO estiver no modo apenasModal */}
       {!apenasModal && (
         <div className="nc" style={{ padding: isMobile ? 16 : 24 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: isMobile ? "flex-start" : "center", gap: 12, flexWrap: "wrap", marginBottom: 20 }}>
